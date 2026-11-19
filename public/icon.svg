@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="55%" stop-color="#080c16"/>
+      <stop offset="100%" stop-color="#06281e"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="emerald" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Full-bleed dark editorial background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Subtle outer highlight border -->
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#1e293b" stroke-width="6"/>
+
+  <!-- Iraqi tricolor accent bar at top -->
+  <rect x="96" y="76" width="106" height="22" rx="11" fill="#ce1126"/>
+  <rect x="210" y="76" width="92" height="22" rx="11" fill="#f8fafc"/>
+  <rect x="310" y="76" width="106" height="22" rx="11" fill="#007a3d"/>
+
+  <!-- Central news broadcast card / globe emblem -->
+  <rect x="96" y="128" width="320" height="248" rx="40" fill="#111827" stroke="#334155" stroke-width="6"/>
+
+  <!-- Globe & Meridian rings (World + Live) -->
+  <circle cx="204" cy="248" r="68" fill="none" stroke="url(#emerald)" stroke-width="10"/>
+  <ellipse cx="204" cy="248" rx="34" ry="68" fill="none" stroke="#34d399" stroke-width="7" opacity="0.85"/>
+  <line x1="138" y1="248" x2="270" y2="248" stroke="#34d399" stroke-width="7" stroke-linecap="round"/>
+  <line x1="152" y1="214" x2="256" y2="214" stroke="#34d399" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+  <line x1="152" y1="282" x2="256" y2="282" stroke="#34d399" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- Live Broadcast Signal & News Lines -->
+  <circle cx="342" cy="196" r="16" fill="#ef4444"/>
+  <path d="M 312 166 A 42 42 0 0 1 372 166" fill="none" stroke="url(#gold)" stroke-width="10" stroke-linecap="round"/>
+  <rect x="294" y="236" width="92" height="18" rx="9" fill="#f8fafc"/>
+  <rect x="294" y="272" width="76" height="16" rx="8" fill="#94a3b8"/>
+  <rect x="294" y="306" width="60" height="16" rx="8" fill="#38bdf8"/>
+
+  <!-- Bottom News Ticker Pill -->
+  <rect x="136" y="406" width="240" height="26" rx="13" fill="url(#gold)"/>
+  <circle cx="164" cy="419" r="6" fill="#080c16"/>
+  <rect x="184" y="413" width="164" height="12" rx="6" fill="#080c16"/>
+</svg>

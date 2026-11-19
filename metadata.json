@@ -1,0 +1,6 @@
+{
+  "name": "أخبار العراق والعالم",
+  "description": "تطبيق إخباري عربي شامل لمتابعة أخبار العراق والمحافظات وأخبار العالم والتكنولوجيا مع قارئ صوتي وميزة الحفظ.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

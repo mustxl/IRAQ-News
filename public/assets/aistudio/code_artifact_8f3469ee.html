@@ -1,0 +1,2239 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>أخبار العراق والعالم</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Tajawal', 'sans-serif'],
+            display: ['Cairo', 'sans-serif']
+          },
+          colors: {
+            iraqRed: '#CE1126',
+            iraqGreen: '#007A3D',
+            darkBg: '#080C16',
+            darkCard: '#111827',
+            darkBorder: '#1E293B'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Tajawal', sans-serif;
+      overscroll-behavior-y: contain;
+      overflow-x: hidden;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* تلوين كلمة التكنولوجيا بألوان متعددة مع بقاء الحروف العربية متصلة 100% */
+    .tech-connected-rainbow {
+      background: linear-gradient(90deg, #FF3B30 0%, #FF9500 18%, #FFCC00 35%, #34C759 52%, #00C7BE 68%, #007AFF 84%, #AF52DE 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      letter-spacing: 0 !important;
+      font-feature-settings: "liga" 1, "calt" 1;
+      display: inline-block;
+    }
+
+    @keyframes pulseDot {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(206, 17, 38, 0.75); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(206, 17, 38, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(206, 17, 38, 0); }
+    }
+    .live-dot { animation: pulseDot 2s infinite; }
+
+    /* تحريك سلس لدرج الفلاتر القابل للطي */
+    .filter-drawer {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+      opacity: 0;
+    }
+    .filter-drawer.open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+    }
+    .filter-drawer-inner { overflow: hidden; }
+
+    /* نافذة القراءة السفلية */
+    .sheet-panel {
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 dark:bg-darkBg text-slate-900 dark:text-slate-100 min-h-screen pb-24 transition-colors duration-200">
+
+  <!-- 1. الشريط العلوي المدمج (بحث + تحديث + ترس الإعدادات 3D) -->
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-darkBg/95 backdrop-blur-md border-b border-slate-200/90 dark:border-darkBorder shadow-xs">
+    <div class="max-w-xl mx-auto px-2.5 py-2 flex items-center gap-1.5">
+      <!-- حقل البحث الفوري -->
+      <div class="relative flex-1 min-w-0">
+        <span class="absolute inset-y-0 right-2.5 flex items-center text-slate-400 pointer-events-none text-xs">🔍</span>
+        <input
+          type="search"
+          id="search-input"
+          placeholder="ابحث في الأخبار..."
+          class="w-full h-9 pr-8 pl-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-iraqRed/40 transition-all"
+        />
+      </div>
+
+      <!-- زر التحديث -->
+      <button
+        type="button"
+        id="btn-refresh"
+        class="h-9 px-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/75 dark:hover:bg-emerald-900/75 border border-emerald-200 dark:border-emerald-800/80 text-iraqGreen dark:text-emerald-300 font-bold text-xs flex items-center gap-1 shrink-0 active:scale-95 transition-all"
+        title="تحديث الأخبار أولاً بأول"
+      >
+        <svg id="refresh-icon" class="w-3.5 h-3.5 transition-transform duration-500" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span>تحديث</span>
+      </button>
+
+      <!-- زر الإعدادات العصري ثلاثي الأبعاد (3D Gear) -->
+      <button
+        type="button"
+        id="btn-settings"
+        aria-label="الإعدادات وضبط المصادر"
+        title="الإعدادات وضبط المصادر"
+        class="w-10 h-10 rounded-2xl bg-gradient-to-br from-white via-slate-100 to-slate-200 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 border border-slate-300/90 dark:border-slate-700/90 shadow-[0_5px_14px_rgba(0,0,0,0.14),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_5px_16px_rgba(0,0,0,0.55),inset_0_1px_1px_rgba(255,255,255,0.14)] flex items-center justify-center shrink-0 transition-transform hover:scale-105 active:scale-95"
+      >
+        <svg id="gear-3d-icon" class="w-6 h-6 transition-transform duration-500 drop-shadow-[0_3px_4px_rgba(0,0,0,0.35)]" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g3dMetal" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#FFFFFF"/>
+              <stop offset="35%" stop-color="#CBD5E1"/>
+              <stop offset="75%" stop-color="#64748B"/>
+              <stop offset="100%" stop-color="#1E293B"/>
+            </linearGradient>
+            <linearGradient id="g3dRing" x1="14" y1="12" x2="50" y2="52" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#38BDF8"/>
+              <stop offset="50%" stop-color="#6366F1"/>
+              <stop offset="100%" stop-color="#0F172A"/>
+            </linearGradient>
+            <radialGradient id="g3dCore" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(27 25) rotate(45) scale(20)">
+              <stop offset="0%" stop-color="#FFFFFF"/>
+              <stop offset="50%" stop-color="#E2E8F0"/>
+              <stop offset="100%" stop-color="#475569"/>
+            </radialGradient>
+          </defs>
+          <!-- ظل ثلاثي الأبعاد -->
+          <path d="M27.5 8H36.5L38 14.3C39.8 14.9 41.5 15.7 43.1 16.7L48.9 13.7L55.3 20.1L52.3 25.9C53.3 27.5 54.1 29.2 54.7 31L61 32.5V41.5L54.7 43C54.1 44.8 53.3 46.5 52.3 48.1L55.3 53.9L48.9 60.3L43.1 57.3C41.5 58.3 39.8 59.1 38 59.7L36.5 64H27.5L26 59.7C24.2 59.1 22.5 58.3 20.9 57.3L15.1 60.3L8.7 53.9L11.7 48.1C10.7 46.5 9.9 44.8 9.3 43L3 41.5V32.5L9.3 31C9.9 29.2 10.7 27.5 11.7 25.9L8.7 20.1L15.1 13.7L20.9 16.7C22.5 15.7 24.2 14.9 26 14.3L27.5 8Z" fill="#0F172A" fill-opacity="0.42"/>
+          <!-- هيكل الترس المعدني -->
+          <path d="M27.5 5H36.5L38 11.3C39.8 11.9 41.5 12.7 43.1 13.7L48.9 10.7L55.3 17.1L52.3 22.9C53.3 24.5 54.1 26.2 54.7 28L61 29.5V38.5L54.7 40C54.1 41.8 53.3 43.5 52.3 45.1L55.3 50.9L48.9 57.3L43.1 54.3C41.5 55.3 39.8 56.1 38 56.7L36.5 61H27.5L26 56.7C24.2 56.1 22.5 55.3 20.9 54.3L15.1 57.3L8.7 50.9L11.7 45.1C10.7 43.5 9.9 41.8 9.3 40L3 38.5V29.5L9.3 28C9.9 26.2 10.7 24.5 11.7 22.9L8.7 17.1L15.1 10.7L20.9 13.7C22.5 12.7 24.2 11.9 26 11.3L27.5 5Z" fill="url(#g3dMetal)" stroke="#FFFFFF" stroke-opacity="0.8" stroke-width="1.2"/>
+          <!-- الحلقة الزجاجية الملونة -->
+          <circle cx="32" cy="33" r="15.5" fill="url(#g3dRing)" stroke="#F1F5F9" stroke-width="1.5"/>
+          <!-- قلب الترس -->
+          <circle cx="32" cy="33" r="8.5" fill="url(#g3dCore)" stroke="#1E293B" stroke-opacity="0.45" stroke-width="1.4"/>
+          <!-- انعكاس ضوئي -->
+          <ellipse cx="28" cy="28" rx="3.6" ry="2" transform="rotate(-30 28 28)" fill="#FFFFFF" fill-opacity="0.92"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. المحتوى الرئيسي -->
+  <main class="max-w-xl mx-auto px-2.5 pt-2.5 space-y-3">
+
+    <!-- مؤشر التحميل الهيكلي -->
+    <div id="skeleton-loader" class="hidden space-y-3">
+      <div class="h-44 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
+      <div class="h-36 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
+      <div class="h-36 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
+    </div>
+
+    <!-- ===================================================================
+         القسم الأول: أخبار العراق أولاً بأول
+         =================================================================== -->
+    <section id="sec-iraq" class="space-y-2.5">
+      <!-- ترويسة قسم العراق المدمجة بخلفية تراث العراق بشفافية 20% -->
+      <div class="relative overflow-hidden rounded-2xl bg-white dark:bg-darkCard border border-slate-200/90 dark:border-slate-800 shadow-xs">
+        <img
+          id="heritage-bg-img"
+          src=""
+          alt="تراث العراق"
+          class="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none select-none transition-opacity duration-700"
+        />
+        <div class="relative z-10 px-3 py-2.5 flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded bg-iraqRed text-white leading-none">بالدرجة الأولى</span>
+              <span class="text-[10px] font-bold text-iraqGreen dark:text-emerald-400 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-iraqRed live-dot"></span>
+                رصد مباشر
+              </span>
+            </div>
+            <h1 class="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white leading-tight mt-1 flex items-center gap-2">
+              <!-- أيقونة علم العراق 🇮🇶 -->
+              <span class="inline-flex items-center justify-center shrink-0 rounded-[4px] overflow-hidden shadow-xs border border-slate-300 dark:border-slate-600" title="علم جمهورية العراق">
+                <svg class="w-6 h-4" viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="900" height="200" fill="#CE1126"/>
+                  <rect y="200" width="900" height="200" fill="#FFFFFF"/>
+                  <rect y="400" width="900" height="200" fill="#000000"/>
+                  <text x="450" y="342" fill="#007A3D" font-family="Cairo, Arial, sans-serif" font-weight="900" font-size="118" text-anchor="middle">الله أكبر</text>
+                </svg>
+              </span>
+              <span class="truncate">أخبار العراق أولاً بأول</span>
+            </h1>
+          </div>
+
+          <!-- زر فتح/طي درج الفلاتر (مطوي افتراضياً عند فتح التطبيق) -->
+          <button
+            type="button"
+            id="btn-toggle-filters"
+            aria-expanded="false"
+            class="px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-[11px] flex items-center gap-1.5 active:scale-95 transition-all shrink-0 shadow-xs"
+          >
+            <span>تصفية الأخبار</span>
+            <span id="filter-count-badge" class="hidden px-1.5 rounded-full bg-iraqRed text-white text-[10px] font-black">0</span>
+            <span id="filter-chevron" class="text-[10px] transition-transform duration-300">🔻</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- درج الفلاتر القابل للطي والفتح (مطوي افتراضياً) -->
+      <div id="iraq-filter-drawer" class="filter-drawer">
+        <div class="filter-drawer-inner">
+          <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder p-2.5 shadow-sm space-y-2">
+            <!-- 1. نوع المصدر -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+              <button type="button" data-f-key="sourceType" data-f-val="all" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-900 text-white dark:bg-white dark:text-slate-900">الكل</button>
+              <button type="button" data-f-key="sourceType" data-f-val="iraqi_tv" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">قنوات ووكالات عراقية</button>
+              <button type="button" data-f-key="sourceType" data-f-val="iraqi_press" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">جرائد عراقية</button>
+              <button type="button" data-f-key="sourceType" data-f-val="intl_iraq" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">تغطية دولية للعراق</button>
+            </div>
+
+            <!-- 2. المصادر العراقية المحددة -->
+            <div id="iraq-sources-strip" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 border-t border-slate-100 dark:border-slate-800 pt-2"></div>
+
+            <!-- 3. المحافظات العراقية -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 border-t border-slate-100 dark:border-slate-800 pt-2">
+              <span class="text-[10px] font-bold text-slate-400 shrink-0">المحافظة:</span>
+              <button type="button" data-f-key="governorate" data-f-val="all" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-iraqGreen text-white">كل العراق</button>
+              <button type="button" data-f-key="governorate" data-f-val="بغداد" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">بغداد</button>
+              <button type="button" data-f-key="governorate" data-f-val="كربلاء" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">كربلاء</button>
+              <button type="button" data-f-key="governorate" data-f-val="البصرة" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">البصرة</button>
+              <button type="button" data-f-key="governorate" data-f-val="أربيل" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">أربيل</button>
+              <button type="button" data-f-key="governorate" data-f-val="نينوى" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">نينوى</button>
+              <button type="button" data-f-key="governorate" data-f-val="النجف" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">النجف</button>
+            </div>
+
+            <!-- 4. الموضوع -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar border-t border-slate-100 dark:border-slate-800 pt-2">
+              <span class="text-[10px] font-bold text-slate-400 shrink-0">القسم:</span>
+              <button type="button" data-f-key="topic" data-f-val="all" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-iraqRed text-white">الكل</button>
+              <button type="button" data-f-key="topic" data-f-val="سياسة" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">سياسة</button>
+              <button type="button" data-f-key="topic" data-f-val="اقتصاد وطاقة" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">اقتصاد وطاقة</button>
+              <button type="button" data-f-key="topic" data-f-val="خدمات ومحافظات" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">خدمات ومحافظات</button>
+              <button type="button" data-f-key="topic" data-f-val="رياضة عراقية" class="f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">رياضة عراقية</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- قائمة بطاقات أخبار العراق -->
+      <div id="iraq-list" class="space-y-3"></div>
+      <!-- نقطة مراقبة التمرير لتحميل الأرشيف القديم تلقائياً دون أي صندوق تذييل -->
+      <div id="iraq-scroll-sentinel" class="h-2"></div>
+    </section>
+
+    <!-- ===================================================================
+         القسم الثاني: أخبار العالم (بالدرجة الثانية)
+         =================================================================== -->
+    <section id="sec-world" class="hidden space-y-2.5">
+      <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder p-3 shadow-xs space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded bg-blue-600 text-white">بالدرجة الثانية</span>
+            <h2 class="font-display font-black text-base text-slate-900 dark:text-white mt-0.5 flex items-center gap-1.5">
+              <span>🌐</span>
+              <span>أخبار العالم</span>
+            </h2>
+          </div>
+          <span id="world-count" class="text-[11px] font-bold text-slate-400"></span>
+        </div>
+
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <button type="button" data-w-cat="all" class="w-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-blue-600 text-white">الكل</button>
+          <button type="button" data-w-cat="سياسة دولية" class="w-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">سياسة دولية</button>
+          <button type="button" data-w-cat="اقتصاد وأسواق" class="w-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">اقتصاد وأسواق</button>
+          <button type="button" data-w-cat="رياضة عالمية" class="w-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">رياضة عالمية</button>
+          <button type="button" data-w-cat="صحة ومنوعات" class="w-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">صحة ومنوعات</button>
+        </div>
+      </div>
+
+      <div id="world-list" class="space-y-3"></div>
+    </section>
+
+    <!-- ===================================================================
+         القسم الثالث: التكنولوجيا (ألعاب، علوم وفضاء، اختراعات، ذكاء اصطناعي)
+         =================================================================== -->
+    <section id="sec-tech" class="hidden space-y-2.5">
+      <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder p-3 shadow-xs space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded bg-purple-600 text-white">ألعاب • علوم • فضاء • اختراعات</span>
+            <h2 class="font-display font-black text-lg mt-0.5 flex items-center gap-1.5">
+              <span>🎮</span>
+              <span class="tech-connected-rainbow">التكنولوجيا</span>
+            </h2>
+          </div>
+          <span id="tech-count" class="text-[11px] font-bold text-slate-400"></span>
+        </div>
+
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <button type="button" data-t-cat="all" class="t-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-purple-600 text-white">الكل</button>
+          <button type="button" data-t-cat="ألعاب إلكترونية" class="t-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">🎮 ألعاب إلكترونية (PS5 / Xbox / PC)</button>
+          <button type="button" data-t-cat="علوم وفضاء" class="t-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">🚀 علوم وفضاء</button>
+          <button type="button" data-t-cat="اختراعات واكتشافات" class="t-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">💡 اختراعات واكتشافات</button>
+          <button type="button" data-t-cat="ذكاء اصطناعي وتقنية" class="t-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">🤖 ذكاء اصطناعي وتقنية</button>
+        </div>
+      </div>
+
+      <div id="tech-list" class="space-y-3"></div>
+    </section>
+
+    <!-- ===================================================================
+         القسم الرابع: المحفوظات
+         =================================================================== -->
+    <section id="sec-saved" class="hidden space-y-2.5">
+      <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder p-3 flex items-center justify-between">
+        <div>
+          <h2 class="font-display font-black text-base text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>🔖</span>
+            <span>المحفوظات</span>
+          </h2>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">الأخبار المحفوظة في ذاكرة جهازك للقراءة لاحقاً</p>
+        </div>
+        <button type="button" id="btn-clear-saved" class="hidden px-2.5 py-1.5 rounded-xl text-xs font-bold bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400">
+          مسح الكل
+        </button>
+      </div>
+
+      <div id="saved-list" class="space-y-3"></div>
+    </section>
+
+  </main>
+
+  <!-- 3. شريط المشغل الصوتي الحي للقارئ النسائي غير المنقطع -->
+  <div
+    id="audio-bar"
+    class="hidden fixed bottom-16 left-2.5 right-2.5 max-w-xl mx-auto z-40 bg-slate-900/95 dark:bg-slate-800/95 backdrop-blur-md text-white rounded-2xl p-2.5 shadow-2xl border border-amber-400/50 space-y-2"
+  >
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0 flex-1">
+        <span class="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-sm font-bold shrink-0 animate-pulse">🔊</span>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-1.5">
+            <span id="audio-mode-tag" class="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-bold">صوت النظام الأنثوي</span>
+            <span id="audio-chunk-counter" class="text-[10px] font-bold text-amber-300">1/8</span>
+          </div>
+          <p id="audio-article-title" class="text-[11px] font-extrabold text-white truncate"></p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1 shrink-0">
+        <button type="button" id="btn-audio-pause" class="px-2 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-[11px] font-bold">إيقاف مؤقت</button>
+        <button type="button" id="btn-audio-next" class="px-2 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-[11px] font-bold" title="الجملة التالية">التالي ⏭</button>
+        <button type="button" id="btn-audio-stop" class="w-7 h-7 rounded-xl bg-red-500/85 hover:bg-red-600 text-white flex items-center justify-center text-xs font-bold" title="إيقاف">✕</button>
+      </div>
+    </div>
+
+    <!-- شريط التقدم والنص الحي للجملة المقروءة حالياً -->
+    <div class="space-y-1">
+      <div class="w-full h-1 bg-white/15 rounded-full overflow-hidden">
+        <div id="audio-progress-bar" class="h-full bg-amber-400 transition-all duration-300" style="width: 12%"></div>
+      </div>
+      <p id="audio-live-subtitle" class="text-[11px] text-amber-200/95 truncate"></p>
+    </div>
+  </div>
+
+  <!-- 4. شريط التنقل السفلي الثابت (4 تبويبات رئيسية) -->
+  <nav class="fixed bottom-0 inset-x-0 z-40 h-16 bg-white/95 dark:bg-darkBg/95 backdrop-blur-md border-t border-slate-200 dark:border-darkBorder shadow-lg">
+    <div class="max-w-xl mx-auto h-full grid grid-cols-4">
+      <!-- 1. العراق -->
+      <button type="button" data-tab="iraq" class="tab-btn relative flex flex-col items-center justify-center gap-1 text-iraqRed dark:text-red-400 font-bold">
+        <span class="tab-line absolute top-0 w-9 h-1 rounded-b-full bg-iraqRed"></span>
+        <span class="inline-flex items-center justify-center rounded-[3px] overflow-hidden shadow-xs border border-slate-300 dark:border-slate-600">
+          <svg class="w-5 h-3.5" viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+            <rect width="900" height="200" fill="#CE1126"/>
+            <rect y="200" width="900" height="200" fill="#FFFFFF"/>
+            <rect y="400" width="900" height="200" fill="#000000"/>
+            <text x="450" y="342" fill="#007A3D" font-family="Cairo, Arial, sans-serif" font-weight="900" font-size="118" text-anchor="middle">الله أكبر</text>
+          </svg>
+        </span>
+        <span class="text-[11px]">العراق</span>
+      </button>
+
+      <!-- 2. العالم -->
+      <button type="button" data-tab="world" class="tab-btn relative flex flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 font-medium">
+        <span class="tab-line hidden absolute top-0 w-9 h-1 rounded-b-full bg-blue-600"></span>
+        <span class="text-base leading-none">🌐</span>
+        <span class="text-[11px]">العالم</span>
+      </button>
+
+      <!-- 3. التكنولوجيا (ملونة ومتصلة الحروف) -->
+      <button type="button" data-tab="tech" class="tab-btn relative flex flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 font-bold">
+        <span class="tab-line hidden absolute top-0 w-9 h-1 rounded-b-full bg-purple-600"></span>
+        <span class="text-base leading-none">🎮</span>
+        <span class="text-[11px] font-display font-black tech-connected-rainbow">التكنولوجيا</span>
+      </button>
+
+      <!-- 4. المحفوظات -->
+      <button type="button" data-tab="saved" class="tab-btn relative flex flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 font-medium">
+        <span class="tab-line hidden absolute top-0 w-9 h-1 rounded-b-full bg-iraqGreen"></span>
+        <div class="relative">
+          <span class="text-base leading-none">🔖</span>
+          <span id="saved-badge" class="hidden absolute -top-1.5 -left-2.5 min-w-[16px] h-4 px-1 rounded-full bg-iraqGreen text-white text-[9px] font-black flex items-center justify-center">0</span>
+        </div>
+        <span class="text-[11px]">المحفوظات</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 5. نافذة قراءة تفاصيل الخبر الكاملة (Full Article Bottom Sheet) -->
+  <div id="article-modal" class="hidden fixed inset-0 z-50 flex flex-col justify-end">
+    <div id="article-backdrop" class="fixed inset-0 bg-black/75 backdrop-blur-xs"></div>
+
+    <div class="sheet-panel relative z-10 w-full max-w-xl mx-auto bg-white dark:bg-darkCard rounded-t-3xl shadow-2xl border-t border-slate-200 dark:border-slate-700 max-h-[92vh] flex flex-col overflow-hidden">
+      <!-- شريط أدوات النافذة -->
+      <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0 bg-white dark:bg-darkCard">
+        <div class="flex items-center gap-1.5 min-w-0">
+          <span id="m-source-badge" class="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-iraqRed text-white truncate">المصدر</span>
+          <span id="m-gov-badge" class="hidden px-2 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 shrink-0"></span>
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" id="btn-m-speak" class="px-2.5 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 text-xs font-extrabold flex items-center gap-1">
+            <span>🔊</span>
+            <span>استمع للخبر كاملاً</span>
+          </button>
+          <button type="button" id="btn-m-font-dec" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-black" title="تصغير الخط">أ-</button>
+          <button type="button" id="btn-m-font-inc" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-black" title="تكبير الخط">أ+</button>
+          <button type="button" id="btn-m-close" class="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-700 text-sm font-black flex items-center justify-center" aria-label="إغلاق">✕</button>
+        </div>
+      </div>
+
+      <!-- جسم المقال القابل للتمرير -->
+      <div id="m-scroll-box" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <!-- صورة الخبر الكاملة وترويسة العنوان -->
+        <div class="relative overflow-hidden rounded-2xl p-4 sm:p-5 bg-slate-900 text-white min-h-[190px] flex flex-col justify-end">
+          <img id="m-hero-img" src="" alt="" class="absolute inset-0 w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/65 to-slate-900/30"></div>
+          <div class="relative z-10 space-y-2">
+            <div class="flex items-center gap-2 text-[11px] font-bold text-slate-200">
+              <span id="m-cat" class="px-2 py-0.5 rounded bg-white/20 backdrop-blur-xs">سياسة</span>
+              <span>•</span>
+              <span id="m-time">الآن</span>
+              <span>•</span>
+              <span id="m-readtime">دقيقتان قراءة</span>
+            </div>
+            <h2 id="m-title" class="font-display font-black text-lg sm:text-xl leading-snug text-white drop-shadow"></h2>
+          </div>
+        </div>
+
+        <!-- صندوق النقاط السريعة -->
+        <div class="bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 rounded-2xl p-3.5 space-y-2">
+          <h3 class="font-display font-extrabold text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+            <span>⚡</span>
+            <span>أبرز ما في الخبر</span>
+          </h3>
+          <ul id="m-highlights" class="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-disc pr-4"></ul>
+        </div>
+
+        <!-- النص الصحفي الكامل (4 فقرات) -->
+        <div id="m-paragraphs" class="space-y-3.5 text-slate-800 dark:text-slate-200 leading-relaxed text-base"></div>
+      </div>
+
+      <!-- شريط التفاعل السفلي -->
+      <div class="px-4 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 flex items-center justify-between gap-2 shrink-0">
+        <button type="button" id="btn-m-save" class="flex-1 py-2.5 px-3 rounded-xl bg-iraqGreen text-white text-xs font-extrabold flex items-center justify-center gap-1.5">
+          <span>🔖</span>
+          <span id="m-save-label">حفظ في المحفوظات</span>
+        </button>
+        <button type="button" id="btn-m-share" class="flex-1 py-2.5 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-extrabold flex items-center justify-center gap-1.5">
+          <span>📤</span>
+          <span>مشاركة / نسخ</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. نافذة الإعدادات وضبط المصادر (3D Gear Settings Modal) -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-50 flex flex-col justify-end">
+    <div id="settings-backdrop" class="fixed inset-0 bg-black/75 backdrop-blur-xs"></div>
+
+    <div class="relative z-10 w-full max-w-xl mx-auto bg-white dark:bg-darkCard rounded-t-3xl shadow-2xl border-t border-slate-200 dark:border-slate-700 max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="px-4 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+        <h2 class="font-display font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
+          <span>⚙️</span>
+          <span>الإعدادات وضبط المصادر</span>
+        </h2>
+        <button type="button" id="btn-s-close" class="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-700 text-sm font-black flex items-center justify-center">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        <!-- المظهر وحجم الخط -->
+        <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-display font-bold text-sm">المظهر (الوضع الليلي / النهاري)</h3>
+              <p id="s-theme-label" class="text-[11px] text-slate-500 dark:text-slate-400">الوضع النهاري مفعّل</p>
+            </div>
+            <button type="button" id="btn-s-theme" class="px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 text-xs font-extrabold">
+              تبديل الوضع 🌓
+            </button>
+          </div>
+
+          <div class="pt-2.5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <div>
+              <h3 class="font-display font-bold text-sm">حجم خط القراءة الافتراضي</h3>
+              <p id="s-font-label" class="text-[11px] text-slate-500 dark:text-slate-400">متوسط</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="btn-s-font-dec" class="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-xs font-black">أ-</button>
+              <button type="button" id="btn-s-font-inc" class="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-xs font-black">أ+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- تشخيص واختبار القارئ الصوتي -->
+        <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+          <div>
+            <h3 class="font-display font-bold text-sm">قارئ الأخبار الصوتي النسائي 🔊</h3>
+            <p id="s-audio-status" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">الوضع النشط: صوت النظام الأنثوي + البث السحابي الاحتياطي</p>
+          </div>
+          <button type="button" id="btn-s-test-audio" class="px-3 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-extrabold shrink-0">
+            🔊 تجربة قارئ الأخبار الآن
+          </button>
+        </div>
+
+        <!-- ضبط المصادر -->
+        <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700 space-y-3">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h3 class="font-display font-bold text-sm">إدارة المصادر الإخبارية</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">تفعيل أو إخفاء أي قناة أو وكالة أو جريدة</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="btn-s-all" class="px-2.5 py-1 rounded-lg bg-iraqGreen text-white text-[11px] font-bold">تحديد الكل</button>
+              <button type="button" id="btn-s-iraq-only" class="px-2.5 py-1 rounded-lg bg-iraqRed text-white text-[11px] font-bold">المصادر العراقية فقط</button>
+            </div>
+          </div>
+          <div id="s-sources-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+        </div>
+
+        <!-- إحصائيات الأرشيف -->
+        <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+          <div>
+            <h3 class="font-display font-bold text-sm">أرشيف الأخبار المحفوظ</h3>
+            <p id="s-archive-stats" class="text-[11px] text-slate-500 dark:text-slate-400">عدد الأخبار المخزنة: 0</p>
+          </div>
+          <button type="button" id="btn-s-reset-archive" class="px-3 py-2 rounded-xl bg-red-100 dark:bg-red-950/70 text-red-700 dark:text-red-300 text-xs font-bold shrink-0">
+            إعادة ضبط الأرشيف
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- إشعار منبثق -->
+  <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900/95 text-white text-xs font-bold shadow-xl border border-white/15 whitespace-nowrap"></div>
+
+  <!-- 7. المنطق البرمجي الكامل -->
+  <script>
+    (function () {
+      'use strict';
+
+      // --- أدوات الحماية والتخزين الآمن ---
+      const SafeStore = {
+        get(key, fallback) {
+          try {
+            const raw = window.localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : fallback;
+          } catch (_) {
+            return fallback;
+          }
+        },
+        set(key, val) {
+          try {
+            window.localStorage.setItem(key, JSON.stringify(val));
+          } catch (_) {
+            try {
+              if (Array.isArray(val) && val.length > 40) {
+                window.localStorage.setItem(key, JSON.stringify(val.slice(0, 40)));
+              }
+            } catch (__) {}
+          }
+        }
+      };
+
+      function esc(str) {
+        return String(str ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      let toastTimer = null;
+      function showToast(msg) {
+        const el = document.getElementById('toast');
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.remove('hidden');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.add('hidden'), 2600);
+      }
+
+      // --- قائمة المصادر الإخبارية ---
+      const SOURCES = [
+        { id: 'iraqiya', name: 'العراقية الإخبارية', group: 'iraqi_tv', badge: 'bg-emerald-700 text-white' },
+        { id: 'ina', name: 'وكالة الأنباء العراقية (واع)', group: 'iraqi_tv', badge: 'bg-iraqGreen text-white' },
+        { id: 'sharqiya', name: 'الشرقية', group: 'iraqi_tv', badge: 'bg-red-700 text-white' },
+        { id: 'alsumaria', name: 'السومرية', group: 'iraqi_tv', badge: 'bg-amber-600 text-white' },
+        { id: 'alsabah', name: 'الصباح', group: 'iraqi_press', badge: 'bg-slate-800 text-amber-300' },
+        { id: 'azzaman', name: 'الزمان', group: 'iraqi_press', badge: 'bg-indigo-800 text-white' },
+        { id: 'almada', name: 'المدى', group: 'iraqi_press', badge: 'bg-teal-800 text-white' },
+        { id: 'aljazeera_iq', name: 'الجزيرة - العراق', group: 'intl_iraq', badge: 'bg-amber-500 text-slate-950' },
+        { id: 'alarabiya_iq', name: 'العربية - العراق', group: 'intl_iraq', badge: 'bg-purple-700 text-white' },
+        { id: 'world_desk', name: 'وكالات الأنباء العالمية', group: 'world', badge: 'bg-blue-700 text-white' },
+        { id: 'tech_hub', name: 'مختبر التكنولوجيا والعلوم', group: 'tech', badge: 'bg-violet-700 text-white' }
+      ];
+
+      function getSource(id) {
+        return SOURCES.find(s => s.id === id) || { id, name: 'مصدر إخباري', group: 'iraqi_tv', badge: 'bg-slate-700 text-white' };
+      }
+
+      // --- صور تراث العراق بشفافية 20% خلف الترويسة ---
+      const HERITAGE_SCENES = [
+        {
+          url: 'https://images.unsplash.com/photo-1578895101408-1a36b834405b?auto=format&fit=crop&w=900&q=80',
+          svg: `data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 240'><rect width='800' height='240' fill='#92400e'/><rect x='110' y='40' width='150' height='160' rx='8' fill='#fbbf24' fill-opacity='0.65'/><rect x='310' y='25' width='180' height='175' rx='8' fill='#f59e0b' fill-opacity='0.65'/><rect x='540' y='45' width='150' height='155' rx='8' fill='#fbbf24' fill-opacity='0.65'/></svg>")}`
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=900&q=80',
+          svg: `data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 240'><rect width='800' height='240' fill='#065f46'/><path d='M320 200 C320 100, 360 65, 400 40 C440 65, 480 100, 480 200 Z' fill='#fbbf24' fill-opacity='0.7'/></svg>")}`
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80',
+          svg: `data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 240'><rect width='800' height='240' fill='#0369a1'/><path d='M0 175 Q200 155 400 175 T800 175 L800 240 L0 240 Z' fill='#38bdf8' fill-opacity='0.65'/></svg>")}`
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=900&q=80',
+          svg: `data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 240'><rect width='800' height='240' fill='#1e3a8a'/><rect x='230' y='45' width='340' height='165' rx='10' fill='#60a5fa' fill-opacity='0.65'/></svg>")}`
+        }
+      ];
+
+      let heritageIdx = 0;
+      function updateHeritageBg(idx) {
+        const scene = HERITAGE_SCENES[idx % HERITAGE_SCENES.length];
+        const img = document.getElementById('heritage-bg-img');
+        if (img && scene) {
+          img.onerror = function () { this.onerror = null; this.src = scene.svg; };
+          img.src = scene.url;
+        }
+      }
+
+      // --- بديل SVG تلقائي لصور بطاقات الأخبار ---
+      function buildCardFallbackSvg(cat) {
+        const map = {
+          'اقتصاد وطاقة': ['#064e3b', '#10b981'],
+          'سياسة': ['#7f1d1d', '#f59e0b'],
+          'خدمات ومحافظات': ['#1e3a8a', '#38bdf8'],
+          'رياضة عراقية': ['#065f46', '#34d399'],
+          'سياسة دولية': ['#1e293b', '#60a5fa'],
+          'اقتصاد وأسواق': ['#7c2d12', '#fb923c'],
+          'رياضة عالمية': ['#1d4ed8', '#4ade80'],
+          'صحة ومنوعات': ['#115e59', '#2dd4bf'],
+          'ألعاب إلكترونية': ['#4c1d95', '#e879f9'],
+          'علوم وفضاء': ['#172554', '#38bdf8'],
+          'اختراعات واكتشافات': ['#581c87', '#fbbf24'],
+          'ذكاء اصطناعي وتقنية': ['#312e81', '#818cf8']
+        };
+        const [c1, ac] = map[cat] || ['#1e293b', '#38bdf8'];
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 320'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='${c1}'/><stop offset='100%' stop-color='#080c16'/></linearGradient></defs><rect width='800' height='320' fill='url(#g)'/><circle cx='620' cy='110' r='90' fill='${ac}' fill-opacity='0.22'/><path d='M0 250 Q250 190 500 240 T800 210 L800 320 L0 320 Z' fill='${ac}' fill-opacity='0.18'/></svg>`;
+        return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+      }
+
+      // --- قاعدة البيانات الكاملة للأخبار (4 فقرات صحفية لكل خبر) ---
+      const INITIAL_ARTICLES = [
+        {
+          id: 'iq-101',
+          region: 'iraq',
+          sourceId: 'ina',
+          governorate: 'البصرة',
+          category: 'اقتصاد وطاقة',
+          timeAgo: 'منذ 3 دقائق',
+          readTime: 'دقيقتان قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=900&q=80',
+          title: 'الحكومة العراقية تصادق على عقود المرحلة الأولى لمشروع طريق التنمية والربط السككي من ميناء الفاو الكبير',
+          summary: 'إقرار المسارات الهندسية للخط السككي المزدوج السريع بين البصرة وبغداد وصولاً إلى الحدود الشمالية مع إنشاء 15 مدينة صناعية.',
+          highlights: [
+            'توقيع عقود تنفيذ البنى التحتية للمسار السككي السريع من ميناء الفاو الكبير.',
+            'توفير أكثر من 100 ألف فرصة عمل مباشرة للمهندسين والكوادر العراقية.',
+            'إنشاء 15 مدينة صناعية ولوجستية متكاملة على طول مسار الطريق.'
+          ],
+          paragraphs: [
+            'صادق مجلس الوزراء العراقي خلال جلسته الرسمية في بغداد على حزمة العقود التنفيذية الخاصة بالمرحلة الأولى من مشروع طريق التنمية الاستراتيجي، الذي يربط ميناء الفاو الكبير في البصرة بشبكة السكك الحديدية والطرق البرية السريعة نحو الشمال.',
+            'وأوضح المكتب الإعلامي لرئاسة الوزراء أن المشروع يتضمن إنشاء خط سككي مزدوج عالي السرعة لنقل البضائع والمسافرين، بإشراف تحالف من الشركات الهندسية العالمية ووزارة النقل العراقية لضمان أعلى معايير الجودة.',
+            'كما يشمل المخطط المعتمد إقامة 15 مدينة صناعية ولوجستية حديثة موزعة على المحافظات الواقعة على مسار الطريق، مما يعزز الإيرادات غير النفطية وينشط حركة التجارة والصناعة الوطنية.',
+            'وأشارت وزارة النقل إلى أن نسبة الإنجاز في الأرصفة الخمسة لميناء الفاو الكبير والنفق المغمور وصلت إلى مراحل متقدمة تمهيداً لربط الميناء بالممر الاقتصادي الإقليمي.'
+          ]
+        },
+        {
+          id: 'iq-102',
+          region: 'iraq',
+          sourceId: 'iraqiya',
+          governorate: 'كربلاء',
+          category: 'خدمات ومحافظات',
+          timeAgo: 'منذ 9 دقائق',
+          readTime: 'دقيقتان قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=900&q=80',
+          title: 'كربلاء المقدسة تفتتح محطة تحلية مياه حديثة وحقلاً للطاقة الشمسية بقدرة 50 ميجاواط لتعزيز الخدمات',
+          summary: 'دخول المشروعين حيز الخدمة الفعلية لتأمين مياه الشرب للأحياء السكنية الجديدة واستقرار التيار الكهربائي.',
+          highlights: [
+            'تشغيل محطة تحلية بطاقة 4000 متر مكعب في الساعة لخدمة الأحياء التوسعية.',
+            'ربط محطة الطاقة الشمسية بقدرة 50 ميجاواط بالشبكة المحلية لتقليل الأحمال.',
+            'مراقبة إلكترونية مستمرة لجودة المياه واستقرار الفولتية على مدار الساعة.'
+          ],
+          paragraphs: [
+            'أعلنت الحكومة المحلية في محافظة كربلاء المقدسة، بالتنسيق مع وزارتي الموارد المائية والكهرباء، افتتاح مشروعين استراتيجيين في قطاعي المياه والطاقة النظيفة لخدمة أهالي المحافظة والزائرين.',
+            'ويتمثل المشروع الأول في محطة تحلية وتصفية مياه متطورة تعمل بتقنيات التناضح العكسي بطاقة إنتاجية تصل إلى 4000 متر مكعب في الساعة، مما يضمن إيصال المياه النقية إلى الأحياء السكنية الحديثة.',
+            'أما المشروع الثاني فيشمل تشغيل حقل للألواح الشمسية بقدرة 50 ميجاواط، تم ربطه مباشرة بشبكة التوزيع المحلية لدعم استقرار التيار الكهربائي وتقليل ساعات القطع خلال أوقات الذروة.',
+            'وأكدت دائرة المشاريع في كربلاء أن خطة الإعمار تتضمن إنشاء محطات تحويلية إضافية وتأهيل شبكات البنى التحتية في جميع الأقضية والنواحي.'
+          ]
+        },
+        {
+          id: 'iq-103',
+          region: 'iraq',
+          sourceId: 'alsabah',
+          governorate: 'بغداد',
+          category: 'سياسة',
+          timeAgo: 'منذ 17 دقيقة',
+          readTime: '3 دقائق قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80',
+          title: 'مجلس النواب يدرج تعديل قانون الاستثمار الصناعي والضمان الصحي على جدول أعمال جلساته المقبلة',
+          summary: 'اللجان النيابية تستكمل الصياغة النهائية لتبسيط إجراءات منح إجازات الاستثمار وتوسيع شمول المواطنين بالخدمات الصحية.',
+          highlights: [
+            'إنهاء الصياغة النهائية لتعديل قانون الاستثمار الصناعي وتقليص الروتين.',
+            'توسيع شمول المواطنين بخدمات قانون الضمان الصحي في بغداد والمحافظات.',
+            'تفعيل النافذة الإلكترونية الواحدة لتسهيل دخول الشركات الاستثمارية.'
+          ],
+          paragraphs: [
+            'أعلنت رئاسة مجلس النواب العراقي إدراج حزمة من القوانين الاقتصادية والخدمية المهمة على جدول أعمال الجلسات المقبلة، وفي مقدمتها تعديل قانون الاستثمار الصناعي وتوسيع تطبيق قانون الضمان الصحي.',
+            'وأوضحت اللجنة الاقتصادية النيابية في تصريح لجريدة الصباح أن التعديلات المقترحة تمنح إعفاءات ضريبية وجمركية للمصانع الوطنية، وتختصر الزمن اللازم لإصدار إجازات الاستثمار عبر النافذة الإلكترونية الواحدة.',
+            'وفي السياق ذاته، أكدت لجنة الصحة النيابية أن المرحلة الجديدة من الضمان الصحي ستغطي شرائح أوسع من الموظفين والمتقاعدين والعوائل المشمولة بالرعاية الاجتماعية لتخفيف كلف العلاج.',
+            'ومن المقرر أن تشهد الجلسات المقبلة استضافة عدد من المسؤولين لمتابعة نسب تنفيذ المشاريع الخدمية المدرجة في الموازنة الاستثمارية.'
+          ]
+        },
+        {
+          id: 'iq-104',
+          region: 'iraq',
+          sourceId: 'sharqiya',
+          governorate: 'بغداد',
+          category: 'رياضة عراقية',
+          timeAgo: 'منذ 25 دقيقة',
+          readTime: 'دقيقتان قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=900&q=80',
+          title: 'المنتخب الوطني العراقي يختتم تحضيراته وسط جاهزية كاملة قبل المواجهة المرتقبة في تصفيات كأس العالم',
+          summary: 'التحاق جميع اللاعبين المحترفين بالتدريبات الجماعية وسط دعم جماهيري قياسي في ملعب البصرة الدولي.',
+          highlights: [
+            'اكتمال صفوف أسود الرافدين والتحاق جميع المحترفين في الخارج.',
+            'تطبيق خطط تكتيكية هجومية عالية الضغط خلال الوحدة التدريبية الأخيرة.',
+            'نفاد تذاكر المباراة بالكامل قبل 48 ساعة من صافرة البداية.'
+          ],
+          paragraphs: [
+            'اختتم المنتخب الوطني العراقي لكرة القدم وحدته التدريبية الرئيسية وسط معنويات مرتفعة وجاهزية فنية وبدنية كاملة استعداداً للمواجهة الحاسمة ضمن التصفيات الآسيوية المؤهلة إلى نهائيات كأس العالم.',
+            'وشهدت التدريبات مشاركة جميع اللاعبين المحترفين إلى جانب نجوم دوري نجوم العراق، حيث ركز الجهاز الفني على تعزيز الانسجام بين الخطوط وتنفيذ الكرات الثابتة والتحولات الهجومية السريعة.',
+            'وأكد مدرب المنتخب في المؤتمر الصحفي أن اللاعبين عازمون على تقديم أداء يليق بسمعة الكرة العراقية وإسعاد الجماهير الوفية.',
+            'يُذكر أن ملعب البصرة الدولي سيشهد حضوراً جماهيرياً كامل العدد بعد نفاد جميع التذاكر المطروحة عبر المنصة الإلكترونية.'
+          ]
+        },
+        {
+          id: 'iq-105',
+          region: 'iraq',
+          sourceId: 'alsumaria',
+          governorate: 'أربيل',
+          category: 'اقتصاد وطاقة',
+          timeAgo: 'منذ 34 دقيقة',
+          readTime: 'دقيقتان قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80',
+          title: 'انطلاق ملتقى أربيل للاستثمار الزراعي والسياحي بمشاركة أكثر من 120 شركة عراقية وإقليمية',
+          summary: 'توقيع مذكرات تفاهم مشتركة لإنشاء مصانع للصناعات الغذائية وتطوير مشاريع السياحة البيئية.',
+          highlights: [
+            'توقيع 18 مذكرة تفاهم بين شركات القطاع الخاص في بغداد وأربيل والبصرة.',
+            'التركيز على الصناعات الغذائية الحديثة وتخزين المحاصيل الزراعية.',
+            'إطلاق صندوق لدعم المشاريع الصغيرة والمتوسطة لرواد الأعمال الشباب.'
+          ],
+          paragraphs: [
+            'انطلقت في مدينة أربيل أعمال الملتقى الاقتصادي للاستثمار الزراعي والسياحي بمشاركة أكثر من 120 شركة استثمارية وصناعية من مختلف المحافظات العراقية ودول الجوار.',
+            'ويهدف الملتقى إلى تعزيز الشراكة بين رجال الأعمال والمستثمرين لتطوير القطاعات الإنتاجية غير النفطية، وفي مقدمتها الصناعات الغذائية الحديثة والزراعة الذكية والسياحة.',
+            'وشهد اليوم الأول توقيع 18 مذكرة تفاهم لإقامة مصانع مشتركة لتعليب المنتجات الزراعية العراقية وتصدير الفائض منها إلى الأسواق الإقليمية.',
+            'كما أعلن المنظمون إطلاق برنامج تمويل ميسر لدعم المشاريع التقنية والزراعية الناشئة للشباب العراقي.'
+          ]
+        },
+        {
+          id: 'iq-106',
+          region: 'iraq',
+          sourceId: 'almada',
+          governorate: 'نينوى',
+          category: 'خدمات ومحافظات',
+          timeAgo: 'منذ 42 دقيقة',
+          readTime: 'دقيقتان قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=900&q=80',
+          title: 'الموصل تفتتح جسراً حيوياً جديداً وتواصل تأهيل الواجهة النهرية لنهر دجلة لتعزيز حركة النقل',
+          summary: 'المشروع يربط الجانبين الأيمن والأيسر بانسيابية عالية ويقلل الزخم المروري بنسبة 40 بالمئة.',
+          highlights: [
+            'افتتاح الجسر الجديد بستة مسارات وممرات حديثة للمشاة وإنارة شمسية.',
+            'اختصار زمن التنقل بين جانبي مدينة الموصل إلى أقل من 10 دقائق.',
+            'استمرار أعمال إعمار المدينة القديمة والكورنيش السياحي على نهر دجلة.'
+          ],
+          paragraphs: [
+            'افتتحت محافظة نينوى جسراً حيوياً جديداً يربط الجانبين الأيمن والأيسر من مدينة الموصل، ضمن خطة فك الاختناقات المرورية وتطوير شبكة النقل الحضري في المحافظة.',
+            'وأوضحت دائرة الطرق والجسور أن الجسر شُيد وفق أحدث التصاميم الهندسية ويضم 6 مسارات للمركبات مع منظومة إنارة تعمل بالطاقة الشمسية، مما يخفف الزخم المروري بنسبة 40 بالمئة.',
+            'بالتوازي مع ذلك، تتواصل أعمال تأهيل الواجهة النهرية على ضفاف نهر دجلة لإنشاء متنزهات ومرافق سياحية متكاملة تخدم العائلات الموصلية.',
+            'وأشاد أهالي المدينة بوتيرة الإعمار المتصاعدة التي تشمل تأهيل المستشفيات والمدارس وشبكات الخدمات الأساسية.'
+          ]
+        },
+        {
+          id: 'iq-107',
+          region: 'iraq',
+          sourceId: 'aljazeera_iq',
+          governorate: 'بغداد',
+          category: 'اقتصاد وطاقة',
+          timeAgo: 'منذ 51 دقيقة',
+          readTime: '3 دقائق قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=900&q=80',
+          title: 'البنك المركزي العراقي يوسع منظومة الدفع الإلكتروني ويرفع احتياطياته من الذهب والعملات الأجنبية',
+          summary: 'نمو قياسي في استخدام البطاقات المصرفية ونقاط البيع في الأسواق العراقية مع استقرار المؤشرات النقدية.',
+          highlights: [
+            'ارتفاع عدد أجهزة الدفع الإلكتروني (POS) في المحافظات بنسبة 65%.',
+            'تعزيز احتياطيات البنك المركزي من الذهب والعملات الأجنبية.',
+            'تسهيل التحويلات التجارية الخارجية للمستوردين عبر القنوات المصرفية الرسمية.'
+          ],
+          paragraphs: [
+            'سلط تقرير اقتصادي الضوء على الخطوات المتسارعة التي ينفذها البنك المركزي العراقي لتحديث القطاع المصرفي وتوسيع ثقافة الدفع الإلكتروني في عموم المحافظات.',
+            'وأظهرت البيانات الرسمية ارتفاع عدد نقاط البيع الإلكترونية في المراكز التجارية والمؤسسات الحكومية بنسبة 65 بالمئة، مدعوماً بإلغاء العمولات عن المواطنين عند الدفع بالبطاقات.',
+            'وأشار التقرير إلى أن احتياطيات العراق من العملات الأجنبية والذهب سجلت مستويات قياسية، مما يعزز قدرة السياسة النقدية على الحفاظ على استقرار الأسعار في الأسواق المحلية.',
+            'كما يواصل البنك المركزي توسيع شبكة المراسلين الدوليين لتسريع تمويل التجارة الخارجية بكل شفافية وانسيابية.'
+          ]
+        },
+        {
+          id: 'iq-108',
+          region: 'iraq',
+          sourceId: 'azzaman',
+          governorate: 'النجف',
+          category: 'خدمات ومحافظات',
+          timeAgo: 'منذ ساعة',
+          readTime: 'دقيقتان قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=900&q=80',
+          title: 'مطار النجف الأشرف الدولي يسجل نمواً قياسياً في حركة المسافرين ويفتتح صالات حديثة للمغادرة',
+          summary: 'تسيير رحلات جوية مباشرة مع أكثر من 25 وجهة إقليمية ودولية وتطوير أنظمة الأمتعة والجوازات.',
+          highlights: [
+            'ارتفاع حركة المسافرين بنسبة 28% مقارنة بالفترة نفسها من العام الماضي.',
+            'افتتاح صالات انتظار حديثة وتحديث أنظمة الجوازات والأمتعة الإلكترونية.',
+            'إضافة وجهات جوية مباشرة جديدة لتسهيل سفر المواطنين والوافدين.'
+          ],
+          paragraphs: [
+            'سجل مطار النجف الأشرف الدولي ارتفاعاً ملحوظاً في حركة الطيران وأعداد المسافرين خلال الربع الأخير، مواصلاً دوره كأحد أبرز المطارات الحيوية في العراق.',
+            'وذكرت إدارة المطار في بيان صحفي أن حركة المسافرين نمت بنسبة 28 بالمئة نتيجة زيادة الرحلات الجوية المباشرة مع أكثر من 25 وجهة عربية وآسيوية وأوروبية.',
+            'وشملت أعمال التطوير الأخيرة تحديث أنظمة مناولة الأمتعة وزيادة كاونترات الجوازات الإلكترونية لاختصار زمن انتظار المسافرين إلى دقائق معدودة.',
+            'وأكدت الإدارة استمرار العمل على مشاريع التوسعة المستقبلية لاستيعاب الزيادة المتوقعة في حركة الشحن الجوي والرحلات السياحية.'
+          ]
+        },
+
+        // --- أخبار العالم ---
+        {
+          id: 'wd-201',
+          region: 'world',
+          sourceId: 'world_desk',
+          category: 'سياسة دولية',
+          timeAgo: 'منذ 14 دقيقة',
+          readTime: '3 دقائق قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=900&q=80',
+          title: 'قمة دولية في جنيف تبحث تأمين الممرات البحرية العالمية وتعزيز سلاسل إمداد الغذاء والطاقة',
+          summary: 'ممثلو أكثر من 70 دولة يناقشون اتفاقيات جديدة لحماية التجارة البحرية ودعم الإنتاج الزراعي في الدول النامية.',
+          highlights: [
+            'مشاركة وفود رسمية من 70 دولة ومنظمات التجارة والغذاء الدولية.',
+            'إطلاق صندوق دولي لدعم سلاسل إمداد الحبوب والسلع الأساسية.',
+            'التأكيد على ضرورة حماية الممرات الملاحية الدولية من الاضطرابات.'
+          ],
+          paragraphs: [
+            'انطلقت في مدينة جنيف السويسرية أعمال القمة الدولية للأمن الغذائي والتجارة البحرية بمشاركة وزراء وممثلين عن أكثر من 70 دولة ومنظمة دولية.',
+            'وتناقش القمة سبل تأمين الممرات البحرية العالمية وضمان تدفق شحنات الحبوب والغذاء والطاقة دون عوائق أو رسوم إضافية تثقل كاهل المستهلكين.',
+            'واقترحت الدول المشاركة إنشاء آلية إنذار مبكر لمراقبة مخزونات الغذاء العالمية وتقديم تمويل ميسر للدول المستوردة لتعزيز إنتاجها الزراعي المحلي.',
+            'ومن المقرر أن يصدر في ختام القمة بيان مشترك يحدد خارطة طريق للتعاون اللوجستي والتجاري خلال العام المقبل.'
+          ]
+        },
+        {
+          id: 'wd-202',
+          region: 'world',
+          sourceId: 'world_desk',
+          category: 'اقتصاد وأسواق',
+          timeAgo: 'منذ 29 دقيقة',
+          readTime: 'دقيقتان قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=900&q=80',
+          title: 'أسواق الطاقة العالمية تشهد توازناً ملحوظاً مع نمو الطلب الصناعي وتوسع استثمارات الطاقة المتجددة',
+          summary: 'مؤسسات مالية دولية تتوقع استقرار أسعار النفط والغاز خلال الربع المقبل بالتزامن مع طفرة الهيدروجين الأخضر.',
+          highlights: [
+            'توقعات باستقرار أسعار خام برنت ضمن نطاق متوازن خلال الأشهر القادمة.',
+            'ارتفاع الطلب الصناعي في الاقتصادات الآسيوية الكبرى بنسبة 3.4%.',
+            'نمو قياسي في استثمارات الطاقة الشمسية والهيدروجين الأخضر عالمياً.'
+          ],
+          paragraphs: [
+            'سجلت أسواق الطاقة العالمية حالة من التوازن الملحوظ في تداولات الأسبوع الجاري، مدعومة بتحسن مؤشرات النمو الصناعي في آسيا واستقرار مستويات الإمداد العالمية.',
+            'وأفاد تقرير صادر عن مؤسسات مالية دولية بأن الطلب العالمي على الطاقة يواصل نموه المعتدل، مع توجه كبرى الشركات إلى تنويع محافظها الاستثمارية بين النفط والغاز ومصادر الطاقة النظيفة.',
+            'وأشار التقرير إلى أن مشروعات الطاقة الشمسية وطاقة الرياح والهيدروجين الأخضر استقطبت استثمارات قياسية تجاوزت التوقعات السنوية.',
+            'ويرى محللون أن هذا التوازن يمنح الدول المنتجة والمستهلكة على حد سواء رؤية أوضح للتخطيط المالي وتنفيذ مشاريع البنية التحتية.'
+          ]
+        },
+        {
+          id: 'wd-203',
+          region: 'world',
+          sourceId: 'world_desk',
+          category: 'رياضة عالمية',
+          timeAgo: 'منذ 46 دقيقة',
+          readTime: 'دقيقتان قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=900&q=80',
+          title: 'ليلة كروية مثيرة في دوري أبطال أوروبا: انتصارات حاسمة للأندية الكبرى وتألق لافت للمواهب الشابة',
+          summary: 'مباريات الجولة تشهد غزارة تهديفية وصراعاً محتدماً على بطاقات التأهل المباشر إلى دور الـ 16.',
+          highlights: [
+            'تسجيل 24 هدفاً في مباريات الجولة وسط حضور جماهيري كامل العدد.',
+            'تألق لافت لحراس المرمى والمواهب الشابة في حسم النقاط الثلاث.',
+            'اشتعال المنافسة على المراكز الثمانية الأولى في جدول الترتيب.'
+          ],
+          paragraphs: [
+            'عاشت جماهير كرة القدم العالمية ليلة كروية استثنائية ضمن منافسات دوري أبطال أوروبا، حيث شهدت الملاعب الأوروبية الكبرى مواجهات هجومية مفتوحة وغزارة تهديفية لافتة.',
+            'ونجحت الأندية المرشحة للقب في تحقيق انتصارات مهمة عززت من رصيدها النقطي في جدول الترتيب، بينما فجرت فرق أخرى مفاجآت قوية بفضل التنظيم الدفاعي والهجمات المرتدة السريعة.',
+            'وبرز خلال الجولة عدد من اللاعبين الشباب الذين خطفوا الأضواء بأهداف حاسمة وتمريرات متقنة نالت إشادة المحللين الرياضيين.',
+            'وتتجه الأنظار الآن إلى الجولة المقبلة التي ستحسم بشكل كبير هوية المتأهلين المباشرين إلى الأدوار الإقصائية.'
+          ]
+        },
+        {
+          id: 'wd-204',
+          region: 'world',
+          sourceId: 'world_desk',
+          category: 'صحة ومنوعات',
+          timeAgo: 'منذ ساعة',
+          readTime: '3 دقائق قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&w=900&q=80',
+          title: 'دراسة طبية عالمية تؤكد أن المشي السريع لمدة 30 دقيقة يومياً يقلل أمراض القلب ويحسن جودة النوم العميق',
+          summary: 'متابعة صحية لأكثر من 50 ألف مشارك تكشف فوائد مذهلة للنشاط البدني المنتظم على صحة الدماغ والذاكرة.',
+          highlights: [
+            'انخفاض مخاطر أمراض القلب والأوعية الدموية بنسبة 35% لدى الملتزمين بالمشي.',
+            'تحسن ملحوظ في جودة النوم العميق وتقليل مستويات التوتر اليومي.',
+            'تعزيز التركيز والذاكرة الوقائية مع التقدم في العمر.'
+          ],
+          paragraphs: [
+            'كشفت دراسة طبية موسعة نُشرت حديثاً أن ممارسة رياضة المشي السريع لمدة 30 دقيقة يومياً فقط تحدث تحولاً إيجابياً كبيراً في صحة القلب والدورة الدموية والجهاز العصبي.',
+            'واستند الباحثون إلى متابعة البيانات الصحية لأكثر من 50 ألف شخص على مدى 7 سنوات، حيث تبين أن المواظبة على المشي المنتظم تخفض احتمالات الإصابة بأمراض القلب بنسبة 35 بالمئة.',
+            'كما أظهرت النتائج أن التعرض للضوء الطبيعي أثناء المشي الصباحي أو المسائي ينظم الساعة البيولوجية للجسم، ما ينعكس مباشرة على عمق النوم وزيادة النشاط الذهني.',
+            'وينصح الأطباء بتقسيم مدة المشي إلى فترتين كل منهما 15 دقيقة لمن لا يملكون وقتاً متواصلاً، مؤكدين أن الفائدة الصحية تبقى متقاربة للغاية.'
+          ]
+        },
+
+        // --- قسم التكنولوجيا ---
+        {
+          id: 'tc-301',
+          region: 'tech',
+          sourceId: 'tech_hub',
+          category: 'ألعاب إلكترونية',
+          timeAgo: 'منذ 7 دقائق',
+          readTime: '3 دقائق قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=900&q=80',
+          title: 'استعراض تقني ضخم لأضخم ألعاب الجيل الجديد على منصات PS5 و Xbox Series X والحاسوب الشخصي PC',
+          summary: 'تحديثات رسومية تدعم تتبع الأشعة الكامل ومعدل 120 إطاراً في الثانية مع تفعيل اللعب المشترك بين المنصات.',
+          highlights: [
+            'دعم تقنيات تتبع الأشعة (Ray Tracing) بدقة 4K حقيقية على PS5 و Xbox و PC.',
+            'تقليص أزمنة التحميل إلى أقل من ثانيتين بفضل وحدات التخزين فائقة السرعة.',
+            'تفعيل طور اللعب المشترك (Cross-Play) بين جميع المنصات المنزلية والحواسيب.'
+          ],
+          paragraphs: [
+            'كشفت كبرى استوديوهات تطوير الألعاب الإلكترونية عن حزمة من العناوين الضخمة القادمة لمنصات PlayStation 5 و Xbox Series X والحاسوب الشخصي PC، وسط طفرة تقنية غير مسبوقة في جودة الرسوميات والفيزياء الواقعية.',
+            'وأظهر العرض التقني اعتماد المحركات الجديدة على تقنية تتبع الأشعة في الوقت الفعلي والإضاءة الديناميكية، مما يمنح العوالم الافتراضية تفاصيل بصرية تقترب من الواقع السينمائي مع الحفاظ على سلاسة 60 إلى 120 إطاراً في الثانية.',
+            'وبالنسبة للاعبي الحاسوب الشخصي (PC)، أعلنت الشركات دعم تقنيات رفع الدقة الذكية وتخصيص إعدادات الرسوميات لتناسب مختلف فئات البطاقات الرسومية، إلى جانب دعم وحدات التحكم اللمسية المتقدمة.',
+            'كما أكدت الاستوديوهات تفعيل ميزة اللعب المشترك (Cross-Play) وحفظ التقدم السحابي، ليتمكن اللاعبون من التنافس والتعاون مع أصدقائهم بغض النظر عن المنصة التي يستخدمونها.'
+          ]
+        },
+        {
+          id: 'tc-302',
+          region: 'tech',
+          sourceId: 'tech_hub',
+          category: 'علوم وفضاء',
+          timeAgo: 'منذ 21 دقيقة',
+          readTime: '3 دقائق قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=900&q=80',
+          title: 'تلسكوب جيمس ويب الفضائي يرصد غلافاً جوياً غنياً ببخار الماء والجزيئات العضوية على كوكب خارج المجموعة الشمسية',
+          summary: 'اكتشاف فلكي يفتح آفاقاً جديدة لفهم نشأة الكواكب الصخرية وإمكانية وجود بيئات صالحة للحياة في المجرة.',
+          highlights: [
+            'رصد بصمات طيفية واضحة لبخار الماء والميثان في الغلاف الجوي للكوكب.',
+            'الكوكب يقع ضمن المنطقة المعتدلة حول نجمه على بعد 120 سنة ضوئية.',
+            'استخدام مستشعرات الأشعة تحت الحمراء فائقة الدقة لتحليل مكونات الغلاف.'
+          ],
+          paragraphs: [
+            'أعلن فريق دولي من علماء الفلك عن إنجاز علمي جديد حققه تلسكوب جيمس ويب الفضائي، تمثل في تحليل التركيب الكيميائي للغلاف الجوي لكوكب خارج المجموعة الشمسية يقع في المنطقة الصالحة للسكن حول نجمه.',
+            'وأظهرت البيانات الطيفية الملتقطة بالأشعة تحت الحمراء وجود نسب واضحة من بخار الماء وثاني أكسيد الكربون وجزيئات عضوية معقدة، مما يشير إلى نشاط جوي نشط ودورة مناخية متكاملة على سطح الكوكب.',
+            'وأوضح الباحثون أن هذا الاكتشاف يمثل خطوة محورية في علم الفلك الحديث، إذ يثبت قدرة الجيل الحالي من المراصد الفضائية على فحص الأغلفة الجوية للكواكب البعيدة بدقة لم تكن متاحة من قبل.',
+            'ومن المقرر أن يوجه التلسكوب عدساته خلال الأشهر القادمة لرصد مجموعة إضافية من الكواكب الصخرية المشابهة للأرض في مجرة درب التبانة.'
+          ]
+        },
+        {
+          id: 'tc-303',
+          region: 'tech',
+          sourceId: 'tech_hub',
+          category: 'اختراعات واكتشافات',
+          timeAgo: 'منذ 38 دقيقة',
+          readTime: 'دقيقتان قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80',
+          title: 'اختراع بطارية الحالة الصلبة فائقة الشحن تمنح الهواتف والسيارات الكهربائية طاقة تدوم لأيام في 5 دقائق فقط',
+          summary: 'ابتكار علمي يستبدل السوائل الكيميائية بمواد سيراميكية آمنة تمنع ارتفاع الحرارة وتضاعف العمر الافتراضي.',
+          highlights: [
+            'شحن كامل من 0% إلى 100% خلال 5 دقائق فقط دون ارتفاع درجة الحرارة.',
+            'مضاعفة كثافة الطاقة وعمر البطارية ليصل إلى أكثر من 5000 دورة شحن.',
+            'بدء التجارب الصناعية تمهيداً لطرحها في الهواتف والمركبات الكهربائية قريباً.'
+          ],
+          paragraphs: [
+            'نجح فريق من مهندسي المواد والطاقة في تطوير جيل ثوري من بطاريات الحالة الصلبة (Solid-State Batteries) القادرة على شحن الهواتف الذكية والسيارات الكهربائية بالكامل في غضون 5 دقائق فقط.',
+            'ويعتمد الاختراع الجديد على استبدال الإلكتروليت السائل القابل للاشتعال بمادة سيراميكية صلبة فائقة التوصيل للأيونات، ما يلغي مخاطر ارتفاع الحرارة ويزيد كثافة تخزين الطاقة بنسبة 80 بالمئة مقارنة ببطاريات الليثيوم التقليدية.',
+            'وأظهرت الاختبارات المعملية أن البطارية تحتفظ بأكثر من 92 بالمئة من سعتها الأصلية حتى بعد 5000 دورة شحن كاملة، وهو ما يعادل استخداماً متواصلاً لأكثر من 10 سنوات.',
+            'وتستعد كبرى شركات الإلكترونيات وصناعة السيارات لبدء خطوط الإنتاج التجريبي لهذه التقنية التي ستغير مستقبل الأجهزة المحمولة والنقل النظيف.'
+          ]
+        },
+        {
+          id: 'tc-304',
+          region: 'tech',
+          sourceId: 'tech_hub',
+          category: 'ذكاء اصطناعي وتقنية',
+          timeAgo: 'منذ 50 دقيقة',
+          readTime: 'دقيقتان قراءة',
+          imageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=900&q=80',
+          title: 'نماذج الذكاء الاصطناعي المحلية تعمل مباشرة على معالجات الهواتف الذكية دون الحاجة للاتصال بالإنترنت',
+          summary: 'قفزة في الخصوصية والسرعة تتيح الترجمة الفورية وتلخيص المستندات وتحرير الصور داخل الجهاز نفسه.',
+          highlights: [
+            'معالجة البيانات محلياً بالكامل لضمان أعلى مستويات الخصوصية للمستخدم.',
+            'ترجمة صوتية فورية للمكالمات والمحادثات دون الحاجة لبيانات الإنترنت.',
+            'استهلاك منخفض جداً للطاقة بفضل وحدات المعالجة العصبية (NPU) الحديثة.'
+          ],
+          paragraphs: [
+            'تشهد صناعة الهواتف الذكية تحولاً كبيراً نحو تشغيل نماذج الذكاء الاصطناعي مباشرة على شرائح المعالجة داخل الجهاز (On-Device AI)، دون الحاجة لإرسال بيانات المستخدمين إلى الخوادم السحابية.',
+            'وتتيح هذه التقنية تنفيذ مهام معقدة مثل الترجمة الصوتية الفورية، وتلخيص المقالات الطويلة، وتعديل الصور والفيديو باحترافية في أجزاء من الثانية وحتى في وضع الطيران.',
+            'وأكد خبراء أمن المعلومات أن المعالجة المحلية تمنح المستخدمين خصوصية كاملة، حيث تبقى الملفات والرسائل الصوتية محفوظة داخل الهاتف ولا تغادره مطلقاً.',
+            'وتتسابق شركات تصنيع المعالجات لتطوير وحدات معالجة عصبية (NPU) أكثر كفاءة لتوفير هذه المزايا في الهواتف المتوسطة والرائدة على حد سواء.'
+          ]
+        }
+      ];
+
+      // --- أخبار جديدة تضاف عند الضغط على زر "تحديث" ---
+      const REFRESH_POOL = [
+        {
+          iraq: {
+            region: 'iraq',
+            sourceId: 'ina',
+            governorate: 'بغداد',
+            category: 'اقتصاد وطاقة',
+            readTime: 'دقيقتان قراءة',
+            imageUrl: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=900&q=80',
+            title: 'وزارة الكهرباء تدخل وحدات توليدية جديدة بطاقة 1200 ميجاواط لتعزيز استقرار الشبكة الوطنية في العراق',
+            summary: 'استكمال أعمال الصيانة والتأهيل في المحطات الرئيسية وربط خطوط نقل جديدة في بغداد والمحافظات.',
+            highlights: [
+              'إدخال وحدات توليدية حديثة بطاقة 1200 ميجاواط إلى الخدمة الفعلية.',
+              'زيادة ساعات التجهيز واستقرار الفولتية في عموم المحافظات العراقية.',
+              'استمرار مشاريع الدورة المركبة لاستثمار الغاز المصاحب.'
+            ],
+            paragraphs: [
+              'أعلنت وزارة الكهرباء العراقية إدخال حزمة جديدة من الوحدات التوليدية إلى الخدمة الفعلية بطاقة إجمالية تبلغ 1200 ميجاواط، وذلك بعد استكمال أعمال التأهيل والصيانة المبرمجة في عدد من المحطات الرئيسية.',
+              'وأوضح المتحدث باسم الوزارة أن هذه الإضافة ستنعكس بشكل مباشر على زيادة ساعات التجهيز واستقرار الشبكة الوطنية في بغداد والمحافظات الوسطى والجنوبية.',
+              'كما أشار إلى أن مشاريع الدورة المركبة التي تعتمد على الغاز الوطني تسير بوتيرة متقدمة لرفع كفاءة الإنتاج وتقليل كلف التشغيل.',
+              'وتواصل الفرق الهندسية مراقبة خطوط النقل ومحطات التحويل لضمان استمرارية التيار الكهربائي على مدار الساعة.'
+            ]
+          },
+          tech: {
+            region: 'tech',
+            sourceId: 'tech_hub',
+            category: 'علوم وفضاء',
+            readTime: 'دقيقتان قراءة',
+            imageUrl: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=80',
+            title: 'اكتشاف كائنات بحرية مضيئة حيوياً في أعماق المحيط الهادئ تفتح آفاقاً جديدة للتصوير الطبي الدقيق',
+            summary: 'بعثة علمية توثق 12 نوعاً جديداً على عمق 3500 متر وتستخلص بروتينات حيوية آمنة للأبحاث الطبية.',
+            highlights: [
+              'توثيق 12 نوعاً جديداً من الكائنات البحرية على عمق 3500 متر.',
+              'استخلاص بروتينات مضيئة آمنة للاستخدام في الفحوصات الخلوية الدقيقة.',
+              'تصوير عالي الدقة باستخدام غواصات روبوتية ذاتية القيادة.'
+            ],
+            paragraphs: [
+              'أعلنت بعثة علمية دولية لاستكشاف أعماق المحيطات عن اكتشاف مجموعة جديدة من الكائنات البحرية المضيئة حيوياً على عمق يتجاوز 3500 متر في المحيط الهادئ.',
+              'واستخدم الباحثون غواصات روبوتية مزودة بكاميرات فائقة الحساسية لتوثيق هذه الكائنات ودراسة خصائصها الفريدة في التكيف مع الضغط العالي والظلام الدامس.',
+              'وكشفت التحاليل الأولية أن البروتينات المسؤولة عن الإضاءة الحيوية في هذه الكائنات يمكن توظيفها في الأبحاث الطبية لتتبع الخلايا بدقة عالية.',
+              'ويؤكد العلماء أن أعماق المحيطات لا تزال تخبئ كنوزاً علمية وطبية هائلة تنتظر الاستكشاف.'
+            ]
+          }
+        },
+        {
+          iraq: {
+            region: 'iraq',
+            sourceId: 'iraqiya',
+            governorate: 'كربلاء',
+            category: 'خدمات ومحافظات',
+            readTime: 'دقيقتان قراءة',
+            imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=900&q=80',
+            title: 'إنجاز مراحل متقدمة من الطريق الحولي الثالث في كربلاء المقدسة وربطه بالطريق الدولي السريع',
+            summary: 'المشروع يضم مجسرات حديثة وإنارة ذكية بالطاقة الشمسية لتخفيف حركة الشاحنات داخل مركز المدينة.',
+            highlights: [
+              'إنجاز 80% من أعمال الإكساء والجسور في الطريق الحولي الجديد.',
+              'ربط مباشر مع الطريق الدولي السريع لتخفيف مرور الشاحنات داخل المدينة.',
+              'تشجير جانبي الطريق وإنشاء استراحات خدمية متكاملة.'
+            ],
+            paragraphs: [
+              'أعلنت مديرية الطرق والجسور في محافظة كربلاء المقدسة وصول نسب الإنجاز في مشروع الطريق الحولي الثالث إلى 80 بالمئة، تمهيداً لافتتاحه أمام حركة المركبات قريباً.',
+              'ويهدف المشروع إلى تحويل حركة الشاحنات والمركبات العابرة خارج مركز المدينة وربطها مباشرة بالطريق الدولي السريع، مما يقلل الازدحامات ويحافظ على سلامة الطرق الداخلية.',
+              'ويضم الطريق الجديد عدة مجسرات وتقاطعات حرة حديثة مع منظومة إنارة تعمل بالطاقة الشمسية وتشجير واسع على جانبي المسار.',
+              'وأكدت المحافظة أن مشاريع فك الاختناقات المرورية تحظى بأولوية قصوى ضمن خطة التنمية المحلية.'
+            ]
+          },
+          tech: {
+            region: 'tech',
+            sourceId: 'tech_hub',
+            category: 'ألعاب إلكترونية',
+            readTime: 'دقيقتان قراءة',
+            imageUrl: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=900&q=80',
+            title: 'إطلاق تحديث ضخم لأشهر ألعاب السباقات والمغامرات على PS5 و Xbox و PC مع خرائط جديدة وطور جماعي',
+            summary: 'التحديث المجاني يضيف فيزياء قيادة محسنة وتأثيرات طقس ديناميكية وصوتاً محيطياً ثلاثي الأبعاد.',
+            highlights: [
+              'إضافة خرائط جديدة بتفاصيل بيئية وتأثيرات طقس ديناميكية واقعية.',
+              'تحسين استجابة وحدات التحكم اللمسية والصوت المحيطي ثلاثي الأبعاد.',
+              'توفر التحديث مجاناً لجميع مالكي اللعبة على المنصات المنزلية والحاسوب.'
+            ],
+            paragraphs: [
+              'أطلقت الشركة المطورة لإحدى أشهر ألعاب السباقات والمغامرات تحديثاً موسمياً ضخماً لمستخدمي منصات PlayStation 5 و Xbox Series X والحاسوب الشخصي PC.',
+              'ويتضمن التحديث خرائط سباق جديدة كلياً تتميز بتغير الأحوال الجوية أثناء اللعب بين الأمطار الغزيرة والغروب، مما يؤثر بشكل واقعي على تماسك المركبات وأسلوب القيادة.',
+              'كما شمل التحديث تحسينات كبيرة على الصوت المحيطي ثلاثي الأبعاد واستجابة الاهتزازات التكيفية في وحدات التحكم اللاسلكية.',
+              'وأعلنت الشركة أن التحديث متاح للتحميل مجاناً مع بطولات أسبوعية تمنح اللاعبين جوائز حصرية داخل اللعبة.'
+            ]
+          }
+        }
+      ];
+
+      // ===================================================================
+      // 8. محرك القراءة الصوتية النسائي الهجين غير المنقطع (FemaleNewsReader)
+      //    يقرأ كامل الخبر (العنوان + الفقرات الأربع) دون توقف بعد 15 ثانية
+      // ===================================================================
+      const FemaleNewsReader = {
+        activeId: null,
+        activeTitle: '',
+        isPaused: false,
+        chunks: [],
+        index: 0,
+        mode: 'native', // 'native' | 'cloud'
+        forceCloud: false,
+        femaleVoice: null,
+        keepAliveTimer: null,
+        watchdogTimer: null,
+        audioObj: null,
+
+        init() {
+          if ('speechSynthesis' in window) {
+            const loadVoices = () => {
+              const list = window.speechSynthesis.getVoices() || [];
+              if (!list.length) return;
+              const preferred = ['laila', 'mariam', 'hoda', 'salma', 'amina', 'fatima', 'rana', 'zira', 'sara', 'female', 'woman'];
+              const arList = list.filter(v => (v.lang || '').toLowerCase().startsWith('ar'));
+              this.femaleVoice =
+                arList.find(v => preferred.some(name => (v.name || '').toLowerCase().includes(name))) ||
+                arList[0] ||
+                null;
+              this.updateDiagnosticsLabel();
+            };
+            loadVoices();
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+          }
+          this.updateDiagnosticsLabel();
+        },
+
+        updateDiagnosticsLabel() {
+          const el = document.getElementById('s-audio-status');
+          if (!el) return;
+          if (!this.forceCloud && this.femaleVoice) {
+            el.textContent = `الوضع النشط: صوت النظام الأنثوي (${this.femaleVoice.name})`;
+          } else {
+            el.textContent = 'الوضع النشط: البث الصوتي السحابي للهواتف (صوت عربي متصل)';
+          }
+        },
+
+        // تقسيم النص الكامل إلى جمل طبيعية (<= 140 حرفاً) عند علامات الترقيم
+        chunkFullText(text) {
+          const clean = String(text || '').replace(/\s+/g, ' ').trim();
+          if (!clean) return [];
+          const sentences = clean.split(/(?<=[،.؟!؛])\s+/);
+          const chunks = [];
+          for (const s of sentences) {
+            if (s.length <= 140) {
+              chunks.push(s);
+            } else {
+              const words = s.split(' ');
+              let cur = '';
+              for (const w of words) {
+                if ((cur + ' ' + w).trim().length > 135) {
+                  if (cur) chunks.push(cur.trim());
+                  cur = w;
+                } else {
+                  cur = (cur + ' ' + w).trim();
+                }
+              }
+              if (cur) chunks.push(cur.trim());
+            }
+          }
+          return chunks.filter(Boolean);
+        },
+
+        stop() {
+          this.activeId = null;
+          this.activeTitle = '';
+          this.isPaused = false;
+          this.chunks = [];
+          this.index = 0;
+
+          clearInterval(this.keepAliveTimer);
+          this.keepAliveTimer = null;
+          clearTimeout(this.watchdogTimer);
+          this.watchdogTimer = null;
+
+          try {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+          } catch (_) {}
+
+          if (this.audioObj) {
+            try {
+              this.audioObj.pause();
+              this.audioObj.src = '';
+            } catch (_) {}
+            this.audioObj = null;
+          }
+
+          this.syncUI();
+        },
+
+        playArticle(article) {
+          if (!article) return;
+          if (this.activeId === article.id) {
+            this.stop();
+            return;
+          }
+
+          this.stop();
+          this.activeId = article.id;
+          this.activeTitle = article.title;
+
+          const src = getSource(article.sourceId);
+          // قراءة الخبر الكامل: المصدر + العنوان + جميع الفقرات الأربع دون اقتطاع
+          const fullArticleText = `خبر من ${src.name}. ${article.title}. ${article.paragraphs.join(' ')}`;
+          this.chunks = this.chunkFullText(fullArticleText);
+          this.index = 0;
+
+          this.syncUI();
+          this.playCurrentChunk();
+        },
+
+        nextChunk() {
+          if (!this.activeId) return;
+          clearTimeout(this.watchdogTimer);
+          try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (_) {}
+          if (this.audioObj) {
+            try { this.audioObj.pause(); this.audioObj.src = ''; } catch (_) {}
+            this.audioObj = null;
+          }
+          this.isPaused = false;
+          this.index += 1;
+          this.playCurrentChunk();
+        },
+
+        togglePause() {
+          if (!this.activeId) return;
+          this.isPaused = !this.isPaused;
+
+          if (this.audioObj) {
+            if (this.isPaused) this.audioObj.pause();
+            else this.audioObj.play().catch(() => {});
+          } else if ('speechSynthesis' in window) {
+            if (this.isPaused) window.speechSynthesis.pause();
+            else window.speechSynthesis.resume();
+          }
+          this.syncUI();
+        },
+
+        playCurrentChunk() {
+          if (!this.activeId) return;
+          if (this.index >= this.chunks.length) {
+            this.stop();
+            return;
+          }
+
+          this.syncUI();
+          const chunk = this.chunks[this.index];
+
+          const useNative = !this.forceCloud && ('speechSynthesis' in window) && Boolean(this.femaleVoice);
+          if (useNative) {
+            this.mode = 'native';
+            this.playNativeChunk(chunk);
+          } else {
+            this.mode = 'cloud';
+            this.playCloudChunk(chunk);
+          }
+        },
+
+        playNativeChunk(chunk) {
+          try {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(chunk);
+            utter.voice = this.femaleVoice;
+            utter.lang = 'ar-SA';
+            utter.pitch = 1.12;
+            utter.rate = 0.96;
+
+            let started = false;
+            let done = false;
+
+            const switchToCloud = () => {
+              if (done || !this.activeId) return;
+              done = true;
+              clearTimeout(this.watchdogTimer);
+              clearInterval(this.keepAliveTimer);
+              this.forceCloud = true;
+              this.updateDiagnosticsLabel();
+              try { window.speechSynthesis.cancel(); } catch (_) {}
+              this.playCloudChunk(chunk);
+            };
+
+            utter.onstart = () => {
+              started = true;
+              clearTimeout(this.watchdogTimer);
+            };
+
+            utter.onend = () => {
+              if (done) return;
+              done = true;
+              clearTimeout(this.watchdogTimer);
+              if (this.activeId && !this.isPaused) {
+                this.index += 1;
+                this.playCurrentChunk();
+              }
+            };
+
+            utter.onerror = switchToCloud;
+
+            // كشف صمت محرك النظام خلال 850ms والانتقال التلقائي للبث السحابي
+            clearTimeout(this.watchdogTimer);
+            this.watchdogTimer = setTimeout(() => {
+              if (!started && !done) switchToCloud();
+            }, 850);
+
+            // نبضة إبقاء الجلسة نشطة كل 3000ms لمنع متصفح الهاتف من قطع القراءة الطويلة
+            clearInterval(this.keepAliveTimer);
+            this.keepAliveTimer = setInterval(() => {
+              if ('speechSynthesis' in window && window.speechSynthesis.speaking && !this.isPaused) {
+                window.speechSynthesis.pause();
+                window.speechSynthesis.resume();
+              }
+            }, 3000);
+
+            window.speechSynthesis.speak(utter);
+          } catch (_) {
+            this.forceCloud = true;
+            this.playCloudChunk(chunk);
+          }
+        },
+
+        playCloudChunk(chunk) {
+          this.updateDiagnosticsLabel();
+          const q = encodeURIComponent(chunk);
+          const endpoints = [
+            `https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q=${q}`,
+            `https://dict.youdao.com/dictvoice?audio=${q}&le=ar`
+          ];
+
+          const tryEndpoint = (epIdx) => {
+            if (!this.activeId) return;
+            if (epIdx >= endpoints.length) {
+              // محاولة أخيرة عبر النطق الافتراضي للمتصفح
+              if ('speechSynthesis' in window) {
+                try {
+                  window.speechSynthesis.cancel();
+                  const u = new SpeechSynthesisUtterance(chunk);
+                  u.pitch = 1.12;
+                  u.rate = 0.96;
+                  u.onend = () => {
+                    if (this.activeId && !this.isPaused) {
+                      this.index += 1;
+                      this.playCurrentChunk();
+                    }
+                  };
+                  u.onerror = () => { this.stop(); };
+                  window.speechSynthesis.speak(u);
+                  return;
+                } catch (_) {}
+              }
+              showToast('تعذر تشغيل الصوت على هذا المتصفح');
+              this.stop();
+              return;
+            }
+
+            if (this.audioObj) {
+              try { this.audioObj.pause(); this.audioObj.src = ''; } catch (_) {}
+            }
+
+            const audio = new Audio(endpoints[epIdx]);
+            this.audioObj = audio;
+
+            audio.onended = () => {
+              if (this.activeId && !this.isPaused) {
+                this.index += 1;
+                this.playCurrentChunk();
+              }
+            };
+
+            audio.onerror = () => tryEndpoint(epIdx + 1);
+
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+              p.catch(() => tryEndpoint(epIdx + 1));
+            }
+          };
+
+          tryEndpoint(0);
+        },
+
+        syncUI() {
+          const bar = document.getElementById('audio-bar');
+          if (!bar) return;
+
+          if (!this.activeId) {
+            bar.classList.add('hidden');
+          } else {
+            bar.classList.remove('hidden');
+            const total = Math.max(1, this.chunks.length);
+            const current = Math.min(total, this.index + 1);
+            const pct = Math.round((current / total) * 100);
+
+            document.getElementById('audio-mode-tag').textContent =
+              this.mode === 'native' ? 'صوت النظام الأنثوي' : 'البث الصوتي السحابي للهواتف';
+            document.getElementById('audio-chunk-counter').textContent = `${current}/${total}`;
+            document.getElementById('audio-article-title').textContent = this.activeTitle;
+            document.getElementById('audio-live-subtitle').textContent = this.chunks[this.index] || '';
+            document.getElementById('audio-progress-bar').style.width = `${pct}%`;
+            document.getElementById('btn-audio-pause').textContent = this.isPaused ? 'استئناف ▶' : 'إيقاف مؤقت';
+          }
+
+          document.querySelectorAll('[data-act="speak"]').forEach(btn => {
+            const active = btn.dataset.id === this.activeId;
+            btn.className = active
+              ? 'w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm shadow-md animate-pulse'
+              : 'w-8 h-8 rounded-full bg-white/15 hover:bg-amber-500/85 backdrop-blur-xs text-white flex items-center justify-center text-sm transition-colors';
+          });
+        }
+      };
+
+      // ===================================================================
+      // 9. إدارة الحالة والأرشيف الدائم (LocalStorage)
+      // ===================================================================
+      const ARCHIVE_STORAGE_KEY = 'iraq_world_news_archive_v5';
+      const BOOKMARKS_STORAGE_KEY = 'iraq_world_news_bookmarks_v5';
+      const SOURCES_STORAGE_KEY = 'iraq_world_news_sources_v5';
+      const THEME_STORAGE_KEY = 'iraq_world_news_theme_v5';
+      const FONT_STORAGE_KEY = 'iraq_world_news_font_v5';
+
+      function initArchive() {
+        const saved = SafeStore.get(ARCHIVE_STORAGE_KEY, null);
+        if (Array.isArray(saved) && saved.length > 0) {
+          const seen = new Set();
+          const result = [];
+          for (const item of saved) {
+            if (item && item.id && !seen.has(item.id)) {
+              seen.add(item.id);
+              result.push(item);
+            }
+          }
+          for (const seed of INITIAL_ARTICLES) {
+            if (!seen.has(seed.id)) {
+              seen.add(seed.id);
+              result.push(seed);
+            }
+          }
+          return result;
+        }
+        SafeStore.set(ARCHIVE_STORAGE_KEY, INITIAL_ARTICLES);
+        return [...INITIAL_ARTICLES];
+      }
+
+      const state = {
+        articles: initArchive(),
+        tab: 'iraq',
+        filtersOpen: false, // مطوي افتراضياً
+        filters: {
+          sourceType: 'all',
+          specificSource: 'all',
+          governorate: 'all',
+          topic: 'all'
+        },
+        iraqLimit: 5,
+        worldCat: 'all',
+        techCat: 'all',
+        query: '',
+        bookmarks: SafeStore.get(BOOKMARKS_STORAGE_KEY, []),
+        enabledSources: SafeStore.get(SOURCES_STORAGE_KEY, SOURCES.map(s => s.id)),
+        fontIdx: SafeStore.get(FONT_STORAGE_KEY, 1),
+        modalArticleId: null,
+        refreshStep: 0
+      };
+
+      // ===================================================================
+      // 10. بناء بطاقات الأخبار (صورة خلف النص + زر 🔊 بالركن الأيسر)
+      // ===================================================================
+      function buildCardHTML(art, isFeatured = false) {
+        const src = getSource(art.sourceId);
+        const isBookmarked = state.bookmarks.includes(art.id);
+        const isSpeaking = FemaleNewsReader.activeId === art.id;
+        const fallbackSvg = buildCardFallbackSvg(art.category);
+
+        return `
+          <article
+            data-act="open"
+            data-id="${esc(art.id)}"
+            class="relative overflow-hidden cursor-pointer group rounded-2xl bg-slate-900 border ${
+              isSpeaking
+                ? 'border-amber-400 ring-2 ring-amber-400/60'
+                : 'border-slate-300/70 dark:border-slate-700/80 hover:border-amber-400/60'
+            } ${isFeatured ? 'p-4 sm:p-5' : 'p-3.5 sm:p-4'} shadow-md transition-transform active:scale-[0.99] text-white flex flex-col gap-2.5"
+          >
+            <!-- صورة الخبر الفوتوغرافية خلف النص -->
+            <img
+              src="${esc(art.imageUrl || fallbackSvg)}"
+              alt="${esc(art.title)}"
+              loading="lazy"
+              onerror="this.onerror=null;this.src='${fallbackSvg}';"
+              class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 pointer-events-none select-none"
+            />
+            <!-- تدرج داكن لقراءة مريحة -->
+            <div
+              class="absolute inset-0 pointer-events-none"
+              style="background: linear-gradient(to top, rgba(10,15,28,0.95) 0%, rgba(10,15,28,0.72) 55%, rgba(10,15,28,0.45) 100%);"
+            ></div>
+
+            <!-- الشريط العلوي للبطاقة: المصدر + أزرار الحفظ والصوت 🔊 بالركن الأيسر -->
+            <div class="relative z-10 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold shadow-xs ${esc(src.badge)}">${esc(src.name)}</span>
+                ${art.governorate ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500/25 backdrop-blur-xs border border-emerald-400/30 text-emerald-200">${esc(art.governorate)}</span>` : ''}
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-white/15 backdrop-blur-xs text-slate-100">${esc(art.category)}</span>
+              </div>
+
+              <!-- الركن الأيسر: حفظ + شعار 🔊 -->
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  data-act="bookmark"
+                  data-id="${esc(art.id)}"
+                  aria-label="حفظ الخبر"
+                  title="${isBookmarked ? 'إزالة من المحفوظات' : 'حفظ الخبر'}"
+                  class="w-8 h-8 rounded-full backdrop-blur-xs flex items-center justify-center transition-colors ${
+                    isBookmarked ? 'bg-iraqGreen text-white shadow-xs' : 'bg-white/15 hover:bg-white/25 text-white'
+                  }"
+                >
+                  <svg class="w-4 h-4" fill="${isBookmarked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  data-act="speak"
+                  data-id="${esc(art.id)}"
+                  aria-label="قراءة الخبر كاملاً بصوت نسائي"
+                  title="قراءة الخبر كاملاً بصوت نسائي"
+                  class="${
+                    isSpeaking
+                      ? 'w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm shadow-md animate-pulse'
+                      : 'w-8 h-8 rounded-full bg-white/15 hover:bg-amber-500/85 backdrop-blur-xs text-white flex items-center justify-center text-sm transition-colors'
+                  }"
+                >
+                  🔊
+                </button>
+              </div>
+            </div>
+
+            ${isFeatured ? `
+              <div class="relative z-10 flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-300">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span>الخبر الأبرز الآن</span>
+              </div>
+            ` : ''}
+
+            <h3 class="relative z-10 font-display font-black ${isFeatured ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'} leading-snug text-white group-hover:text-amber-200 transition-colors drop-shadow">
+              ${esc(art.title)}
+            </h3>
+
+            <p class="relative z-10 text-xs sm:text-sm text-slate-200/90 leading-relaxed line-clamp-2">
+              ${esc(art.summary)}
+            </p>
+
+            <div class="relative z-10 pt-2 border-t border-white/15 flex items-center justify-between text-[11px] text-slate-300">
+              <div class="flex items-center gap-2">
+                <span>${esc(art.timeAgo)}</span>
+                <span>•</span>
+                <span>${esc(art.readTime)}</span>
+              </div>
+              <span class="font-bold text-emerald-300">اقرأ التفاصيل ←</span>
+            </div>
+          </article>
+        `;
+      }
+
+      // ===================================================================
+      // 11. تصفية وعرض الأقسام
+      // ===================================================================
+      function getFilteredIraq() {
+        const q = state.query.trim().toLowerCase();
+        return state.articles.filter(a => {
+          if (a.region !== 'iraq') return false;
+          if (!state.enabledSources.includes(a.sourceId)) return false;
+
+          const src = getSource(a.sourceId);
+          if (state.filters.sourceType !== 'all' && src.group !== state.filters.sourceType) return false;
+          if (state.filters.specificSource !== 'all' && a.sourceId !== state.filters.specificSource) return false;
+          if (state.filters.governorate !== 'all' && a.governorate !== state.filters.governorate) return false;
+          if (state.filters.topic !== 'all' && a.category !== state.filters.topic) return false;
+
+          if (q) {
+            const hay = `${a.title} ${a.summary} ${a.governorate || ''} ${a.category} ${src.name}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+      }
+
+      function renderIraqSourcesStrip() {
+        const strip = document.getElementById('iraq-sources-strip');
+        if (!strip) return;
+        const list = SOURCES.filter(s => {
+          if (s.group === 'world' || s.group === 'tech') return false;
+          if (!state.enabledSources.includes(s.id)) return false;
+          if (state.filters.sourceType !== 'all' && s.group !== state.filters.sourceType) return false;
+          return true;
+        });
+
+        let html = `
+          <button type="button" data-f-key="specificSource" data-f-val="all"
+            class="px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${
+              state.filters.specificSource === 'all' ? 'bg-iraqGreen text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }">
+            الكل (${list.length})
+          </button>
+        `;
+        for (const s of list) {
+          const active = state.filters.specificSource === s.id;
+          html += `
+            <button type="button" data-f-key="specificSource" data-f-val="${esc(s.id)}"
+              class="px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${
+                active ? 'bg-iraqGreen text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }">
+              ${esc(s.name)}
+            </button>
+          `;
+        }
+        strip.innerHTML = html;
+      }
+
+      function syncFilterPills() {
+        let activeCount = 0;
+        if (state.filters.sourceType !== 'all') activeCount++;
+        if (state.filters.specificSource !== 'all') activeCount++;
+        if (state.filters.governorate !== 'all') activeCount++;
+        if (state.filters.topic !== 'all') activeCount++;
+
+        const badge = document.getElementById('filter-count-badge');
+        if (badge) {
+          badge.textContent = String(activeCount);
+          badge.classList.toggle('hidden', activeCount === 0);
+        }
+
+        document.querySelectorAll('.f-pill').forEach(btn => {
+          const k = btn.dataset.fKey;
+          const v = btn.dataset.fVal;
+          const sel = state.filters[k] === v;
+          if (k === 'sourceType') {
+            btn.className = sel
+              ? 'f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+              : 'f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300';
+          } else if (k === 'governorate') {
+            btn.className = sel
+              ? 'f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-iraqGreen text-white'
+              : 'f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300';
+          } else if (k === 'topic') {
+            btn.className = sel
+              ? 'f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-iraqRed text-white'
+              : 'f-pill px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300';
+          }
+        });
+      }
+
+      function renderIraq() {
+        syncFilterPills();
+        renderIraqSourcesStrip();
+
+        const listEl = document.getElementById('iraq-list');
+        if (!listEl) return;
+
+        const items = getFilteredIraq();
+        if (!items.length) {
+          listEl.innerHTML = `
+            <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder p-6 text-center space-y-2.5">
+              <p class="font-display font-bold text-sm">لا توجد أخبار مطابقة لخيارات الفلترة الحالية</p>
+              <button type="button" id="btn-reset-filters" class="px-4 py-2 rounded-xl bg-iraqRed text-white text-xs font-bold">عرض كل أخبار العراق</button>
+            </div>
+          `;
+          return;
+        }
+
+        const visible = items.slice(0, state.iraqLimit);
+        listEl.innerHTML = visible.map((art, i) => buildCardHTML(art, i === 0)).join('');
+      }
+
+      function renderWorld() {
+        const listEl = document.getElementById('world-list');
+        const countEl = document.getElementById('world-count');
+        if (!listEl) return;
+
+        const q = state.query.trim().toLowerCase();
+        const items = state.articles.filter(a => {
+          if (a.region !== 'world') return false;
+          if (!state.enabledSources.includes(a.sourceId)) return false;
+          if (state.worldCat !== 'all' && a.category !== state.worldCat) return false;
+          if (q && !`${a.title} ${a.summary} ${a.category}`.toLowerCase().includes(q)) return false;
+          return true;
+        });
+
+        if (countEl) countEl.textContent = `${items.length} خبر`;
+        listEl.innerHTML = items.length
+          ? items.map((art, i) => buildCardHTML(art, i === 0)).join('')
+          : `<div class="bg-white dark:bg-darkCard rounded-2xl p-6 text-center text-xs font-bold text-slate-500">لا توجد أخبار عالمية مطابقة</div>`;
+      }
+
+      function renderTech() {
+        const listEl = document.getElementById('tech-list');
+        const countEl = document.getElementById('tech-count');
+        if (!listEl) return;
+
+        const q = state.query.trim().toLowerCase();
+        const items = state.articles.filter(a => {
+          if (a.region !== 'tech') return false;
+          if (state.techCat !== 'all' && a.category !== state.techCat) return false;
+          if (q && !`${a.title} ${a.summary} ${a.category}`.toLowerCase().includes(q)) return false;
+          return true;
+        });
+
+        if (countEl) countEl.textContent = `${items.length} خبر`;
+        listEl.innerHTML = items.length
+          ? items.map((art, i) => buildCardHTML(art, i === 0)).join('')
+          : `<div class="bg-white dark:bg-darkCard rounded-2xl p-6 text-center text-xs font-bold text-slate-500">لا توجد أخبار تقنية مطابقة</div>`;
+      }
+
+      function renderSaved() {
+        const listEl = document.getElementById('saved-list');
+        const clearBtn = document.getElementById('btn-clear-saved');
+        const badge = document.getElementById('saved-badge');
+
+        if (badge) {
+          badge.textContent = String(state.bookmarks.length);
+          badge.classList.toggle('hidden', state.bookmarks.length === 0);
+        }
+
+        if (!listEl) return;
+        const items = state.articles.filter(a => state.bookmarks.includes(a.id));
+
+        if (clearBtn) clearBtn.classList.toggle('hidden', items.length === 0);
+
+        if (!items.length) {
+          listEl.innerHTML = `
+            <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder p-8 text-center space-y-2">
+              <div class="text-3xl">🔖</div>
+              <p class="font-display font-bold text-sm">قائمة المحفوظات فارغة</p>
+              <p class="text-xs text-slate-500">اضغط على أيقونة الحفظ في أي بطاقة خبر للاحتفاظ به هنا</p>
+            </div>
+          `;
+          return;
+        }
+        listEl.innerHTML = items.map(art => buildCardHTML(art, false)).join('');
+      }
+
+      function renderCurrentTab() {
+        renderSaved();
+        if (state.tab === 'iraq') renderIraq();
+        else if (state.tab === 'world') renderWorld();
+        else if (state.tab === 'tech') renderTech();
+      }
+
+      function switchTab(tab) {
+        state.tab = tab;
+        ['iraq', 'world', 'tech', 'saved'].forEach(t => {
+          document.getElementById(`sec-${t}`)?.classList.toggle('hidden', t !== tab);
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          const active = btn.dataset.tab === tab;
+          btn.querySelector('.tab-line')?.classList.toggle('hidden', !active);
+          btn.classList.remove('text-iraqRed', 'dark:text-red-400', 'text-blue-600', 'dark:text-blue-400', 'text-iraqGreen', 'dark:text-emerald-400', 'font-bold');
+          btn.classList.add('text-slate-500', 'dark:text-slate-400');
+
+          if (active) {
+            btn.classList.remove('text-slate-500', 'dark:text-slate-400');
+            btn.classList.add('font-bold');
+            if (tab === 'iraq') btn.classList.add('text-iraqRed', 'dark:text-red-400');
+            else if (tab === 'world') btn.classList.add('text-blue-600', 'dark:text-blue-400');
+            else if (tab === 'saved') btn.classList.add('text-iraqGreen', 'dark:text-emerald-400');
+          }
+        });
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        renderCurrentTab();
+      }
+
+      // ===================================================================
+      // 12. نافذة قراءة التفاصيل الكاملة (Article Reader Modal)
+      // ===================================================================
+      function applyFontLevel() {
+        const sizes = ['text-sm', 'text-base', 'text-lg'];
+        const names = ['صغير', 'متوسط', 'كبير'];
+        const box = document.getElementById('m-paragraphs');
+        if (box) {
+          box.classList.remove(...sizes);
+          box.classList.add(sizes[state.fontIdx] || 'text-base');
+        }
+        const sLbl = document.getElementById('s-font-label');
+        if (sLbl) sLbl.textContent = names[state.fontIdx] || 'متوسط';
+      }
+
+      function openArticle(id) {
+        const art = state.articles.find(a => a.id === id);
+        if (!art) return;
+
+        state.modalArticleId = art.id;
+        const src = getSource(art.sourceId);
+
+        const srcBadge = document.getElementById('m-source-badge');
+        srcBadge.textContent = src.name;
+        srcBadge.className = `px-2.5 py-1 rounded-lg text-xs font-extrabold truncate ${src.badge}`;
+
+        const govBadge = document.getElementById('m-gov-badge');
+        if (art.governorate) {
+          govBadge.textContent = art.governorate;
+          govBadge.classList.remove('hidden');
+        } else {
+          govBadge.classList.add('hidden');
+        }
+
+        const img = document.getElementById('m-hero-img');
+        const fallbackSvg = buildCardFallbackSvg(art.category);
+        img.onerror = function () { this.onerror = null; this.src = fallbackSvg; };
+        img.src = art.imageUrl || fallbackSvg;
+
+        document.getElementById('m-cat').textContent = art.category;
+        document.getElementById('m-time').textContent = art.timeAgo;
+        document.getElementById('m-readtime').textContent = art.readTime;
+        document.getElementById('m-title').textContent = art.title;
+
+        document.getElementById('m-highlights').innerHTML = (art.highlights || [art.summary])
+          .map(h => `<li>${esc(h)}</li>`)
+          .join('');
+
+        document.getElementById('m-paragraphs').innerHTML = art.paragraphs
+          .map(p => `<p>${esc(p)}</p>`)
+          .join('');
+
+        applyFontLevel();
+        syncModalBookmarkBtn();
+
+        document.getElementById('m-scroll-box').scrollTop = 0;
+        document.getElementById('article-modal').classList.remove('hidden');
+      }
+
+      function closeArticle() {
+        document.getElementById('article-modal').classList.add('hidden');
+        state.modalArticleId = null;
+      }
+
+      function syncModalBookmarkBtn() {
+        if (!state.modalArticleId) return;
+        const saved = state.bookmarks.includes(state.modalArticleId);
+        const btn = document.getElementById('btn-m-save');
+        const lbl = document.getElementById('m-save-label');
+        lbl.textContent = saved ? 'محفوظ في القائمة ✓' : 'حفظ في المحفوظات';
+        btn.className = saved
+          ? 'flex-1 py-2.5 px-3 rounded-xl bg-slate-800 text-emerald-300 border border-emerald-500/40 text-xs font-extrabold flex items-center justify-center gap-1.5'
+          : 'flex-1 py-2.5 px-3 rounded-xl bg-iraqGreen text-white text-xs font-extrabold flex items-center justify-center gap-1.5';
+      }
+
+      function toggleBookmark(id) {
+        if (!id) return;
+        if (state.bookmarks.includes(id)) {
+          state.bookmarks = state.bookmarks.filter(x => x !== id);
+          showToast('تمت إزالة الخبر من المحفوظات');
+        } else {
+          state.bookmarks.unshift(id);
+          showToast('تم حفظ الخبر في المحفوظات 🔖');
+        }
+        SafeStore.set(BOOKMARKS_STORAGE_KEY, state.bookmarks);
+        syncModalBookmarkBtn();
+        renderCurrentTab();
+      }
+
+      // ===================================================================
+      // 13. نافذة الإعدادات وضبط المصادر (Settings Modal)
+      // ===================================================================
+      function renderSettings() {
+        const list = document.getElementById('s-sources-list');
+        if (list) {
+          list.innerHTML = SOURCES.map(s => {
+            const checked = state.enabledSources.includes(s.id);
+            return `
+              <label class="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer">
+                <span class="text-xs font-bold">${esc(s.name)}</span>
+                <input type="checkbox" data-src-chk="${esc(s.id)}" ${checked ? 'checked' : ''} class="w-4 h-4 accent-iraqGreen rounded" />
+              </label>
+            `;
+          }).join('');
+        }
+
+        const isDark = document.documentElement.classList.contains('dark');
+        document.getElementById('s-theme-label').textContent = isDark ? 'الوضع الليلي مفعّل' : 'الوضع النهاري مفعّل';
+        document.getElementById('s-archive-stats').textContent = `عدد الأخبار المخزنة في الأرشيف: ${state.articles.length} خبر`;
+        applyFontLevel();
+        FemaleNewsReader.updateDiagnosticsLabel();
+      }
+
+      // ===================================================================
+      // 14. تحديث الأخبار وإضافتها إلى الأرشيف الدائم
+      // ===================================================================
+      function handleRefresh() {
+        const icon = document.getElementById('refresh-icon');
+        const skeleton = document.getElementById('skeleton-loader');
+        const activeSec = document.getElementById(`sec-${state.tab}`);
+
+        icon?.classList.add('rotate-180');
+        if (skeleton && activeSec) {
+          activeSec.classList.add('hidden');
+          skeleton.classList.remove('hidden');
+        }
+
+        setTimeout(() => {
+          icon?.classList.remove('rotate-180');
+          if (skeleton && activeSec) {
+            skeleton.classList.add('hidden');
+            activeSec.classList.remove('hidden');
+          }
+
+          const pack = REFRESH_POOL[state.refreshStep % REFRESH_POOL.length];
+          state.refreshStep += 1;
+          const stamp = `${Date.now()}-${state.refreshStep}`;
+
+          const newIraq = { ...pack.iraq, id: `iq-live-${stamp}`, timeAgo: 'الآن' };
+          const newTech = { ...pack.tech, id: `tc-live-${stamp}`, timeAgo: 'الآن' };
+
+          state.articles.unshift(newIraq, newTech);
+          SafeStore.set(ARCHIVE_STORAGE_KEY, state.articles);
+
+          heritageIdx = (heritageIdx + 1) % HERITAGE_SCENES.length;
+          updateHeritageBg(heritageIdx);
+          renderCurrentTab();
+
+          showToast(`تم التحديث • خبر جديد من ${getSource(newIraq.sourceId).name}`);
+        }, 420);
+      }
+
+      // ===================================================================
+      // 15. تهيئة التطبيق وربط الأحداث
+      // ===================================================================
+      function boot() {
+        if (SafeStore.get(THEME_STORAGE_KEY, 'light') === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+
+        updateHeritageBg(0);
+        FemaleNewsReader.init();
+        applyFontLevel();
+        renderCurrentTab();
+
+        // تبديل خلفية تراث العراق بهدوء كل 14 ثانية
+        setInterval(() => {
+          heritageIdx = (heritageIdx + 1) % HERITAGE_SCENES.length;
+          updateHeritageBg(heritageIdx);
+        }, 14000);
+
+        // مراقب التمرير لتحميل الأرشيف القديم تلقائياً دون أي صندوق تذييل
+        const sentinel = document.getElementById('iraq-scroll-sentinel');
+        if (sentinel && 'IntersectionObserver' in window) {
+          const io = new IntersectionObserver(entries => {
+            if (entries[0]?.isIntersecting && state.tab === 'iraq') {
+              const total = getFilteredIraq().length;
+              if (state.iraqLimit < total) {
+                state.iraqLimit += 4;
+                renderIraq();
+              }
+            }
+          }, { rootMargin: '140px' });
+          io.observe(sentinel);
+        }
+
+        // البحث الفوري
+        document.getElementById('search-input')?.addEventListener('input', e => {
+          state.query = e.target.value || '';
+          renderCurrentTab();
+        });
+
+        // زر التحديث
+        document.getElementById('btn-refresh')?.addEventListener('click', handleRefresh);
+
+        // فتح/طي درج الفلاتر (مطوي افتراضياً)
+        document.getElementById('btn-toggle-filters')?.addEventListener('click', () => {
+          state.filtersOpen = !state.filtersOpen;
+          const drawer = document.getElementById('iraq-filter-drawer');
+          const chev = document.getElementById('filter-chevron');
+          const btn = document.getElementById('btn-toggle-filters');
+          drawer?.classList.toggle('open', state.filtersOpen);
+          if (chev) chev.style.transform = state.filtersOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+          btn?.setAttribute('aria-expanded', String(state.filtersOpen));
+        });
+
+        // أزرار المشغل الصوتي
+        document.getElementById('btn-audio-pause')?.addEventListener('click', () => FemaleNewsReader.togglePause());
+        document.getElementById('btn-audio-next')?.addEventListener('click', () => FemaleNewsReader.nextChunk());
+        document.getElementById('btn-audio-stop')?.addEventListener('click', () => FemaleNewsReader.stop());
+
+        // التبويبات السفلية
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        // تصنيفات العالم
+        document.querySelectorAll('.w-pill').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.worldCat = btn.dataset.wCat;
+            document.querySelectorAll('.w-pill').forEach(b => {
+              b.className = b === btn
+                ? 'w-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-blue-600 text-white'
+                : 'w-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300';
+            });
+            renderWorld();
+          });
+        });
+
+        // تصنيفات التكنولوجيا
+        document.querySelectorAll('.t-pill').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.techCat = btn.dataset.tCat;
+            document.querySelectorAll('.t-pill').forEach(b => {
+              b.className = b === btn
+                ? 't-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-purple-600 text-white'
+                : 't-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300';
+            });
+            renderTech();
+          });
+        });
+
+        // نافذة المقال
+        document.getElementById('btn-m-close')?.addEventListener('click', closeArticle);
+        document.getElementById('article-backdrop')?.addEventListener('click', closeArticle);
+        document.getElementById('btn-m-font-inc')?.addEventListener('click', () => {
+          state.fontIdx = Math.min(2, state.fontIdx + 1);
+          SafeStore.set(FONT_STORAGE_KEY, state.fontIdx);
+          applyFontLevel();
+        });
+        document.getElementById('btn-m-font-dec')?.addEventListener('click', () => {
+          state.fontIdx = Math.max(0, state.fontIdx - 1);
+          SafeStore.set(FONT_STORAGE_KEY, state.fontIdx);
+          applyFontLevel();
+        });
+        document.getElementById('btn-m-speak')?.addEventListener('click', () => {
+          const art = state.articles.find(a => a.id === state.modalArticleId);
+          if (art) FemaleNewsReader.playArticle(art);
+        });
+        document.getElementById('btn-m-save')?.addEventListener('click', () => {
+          if (state.modalArticleId) toggleBookmark(state.modalArticleId);
+        });
+        document.getElementById('btn-m-share')?.addEventListener('click', () => {
+          const art = state.articles.find(a => a.id === state.modalArticleId);
+          if (!art) return;
+          const text = `${art.title}\n\n${art.summary}\n\nعبر تطبيق أخبار العراق والعالم`;
+          try {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('تم نسخ نص الخبر للمشاركة 📋');
+          } catch (_) {
+            showToast('تم تجهيز الخبر للمشاركة');
+          }
+        });
+
+        // نافذة الإعدادات (ترس 3D)
+        let gearAngle = 0;
+        document.getElementById('btn-settings')?.addEventListener('click', () => {
+          gearAngle += 180;
+          const g = document.getElementById('gear-3d-icon');
+          if (g) g.style.transform = `rotate(${gearAngle}deg)`;
+          renderSettings();
+          document.getElementById('settings-modal').classList.remove('hidden');
+        });
+        document.getElementById('btn-s-close')?.addEventListener('click', () => {
+          document.getElementById('settings-modal').classList.add('hidden');
+        });
+        document.getElementById('settings-backdrop')?.addEventListener('click', () => {
+          document.getElementById('settings-modal').classList.add('hidden');
+        });
+
+        document.getElementById('btn-s-theme')?.addEventListener('click', () => {
+          const dark = document.documentElement.classList.toggle('dark');
+          SafeStore.set(THEME_STORAGE_KEY, dark ? 'dark' : 'light');
+          renderSettings();
+        });
+        document.getElementById('btn-s-font-inc')?.addEventListener('click', () => {
+          state.fontIdx = Math.min(2, state.fontIdx + 1);
+          SafeStore.set(FONT_STORAGE_KEY, state.fontIdx);
+          applyFontLevel();
+        });
+        document.getElementById('btn-s-font-dec')?.addEventListener('click', () => {
+          state.fontIdx = Math.max(0, state.fontIdx - 1);
+          SafeStore.set(FONT_STORAGE_KEY, state.fontIdx);
+          applyFontLevel();
+        });
+
+        document.getElementById('btn-s-test-audio')?.addEventListener('click', () => {
+          FemaleNewsReader.playArticle({
+            id: 'audio-diagnostic',
+            sourceId: 'ina',
+            title: 'اختبار قارئ الأخبار الصوتي النسائي',
+            paragraphs: [
+              'مرحباً بك في تطبيق أخبار العراق والعالم.',
+              'قارئ الأخبار الصوتي يعمل الآن بكفاءة عالية لقراءة جميع المقالات كاملة من البداية وحتى النهاية دون انقطاع.'
+            ]
+          });
+        });
+
+        document.getElementById('btn-s-all')?.addEventListener('click', () => {
+          state.enabledSources = SOURCES.map(s => s.id);
+          SafeStore.set(SOURCES_STORAGE_KEY, state.enabledSources);
+          renderSettings();
+          renderCurrentTab();
+          showToast('تم تفعيل جميع المصادر الإخبارية');
+        });
+
+        document.getElementById('btn-s-iraq-only')?.addEventListener('click', () => {
+          state.enabledSources = SOURCES.filter(s => s.group !== 'intl_iraq' && s.group !== 'world').map(s => s.id);
+          SafeStore.set(SOURCES_STORAGE_KEY, state.enabledSources);
+          renderSettings();
+          renderCurrentTab();
+          showToast('تم تفعيل المصادر العراقية والتقنية فقط');
+        });
+
+        document.getElementById('btn-s-reset-archive')?.addEventListener('click', () => {
+          state.articles = [...INITIAL_ARTICLES];
+          state.iraqLimit = 5;
+          SafeStore.set(ARCHIVE_STORAGE_KEY, state.articles);
+          renderSettings();
+          renderCurrentTab();
+          showToast('تمت إعادة ضبط أرشيف الأخبار');
+        });
+
+        document.getElementById('btn-clear-saved')?.addEventListener('click', () => {
+          state.bookmarks = [];
+          SafeStore.set(BOOKMARKS_STORAGE_KEY, []);
+          renderSaved();
+          showToast('تم مسح المحفوظات');
+        });
+
+        // تفويض النقرات الموحد
+        document.addEventListener('click', e => {
+          const speakBtn = e.target.closest('[data-act="speak"]');
+          if (speakBtn) {
+            e.stopPropagation();
+            const art = state.articles.find(a => a.id === speakBtn.dataset.id);
+            if (art) FemaleNewsReader.playArticle(art);
+            return;
+          }
+
+          const bmBtn = e.target.closest('[data-act="bookmark"]');
+          if (bmBtn) {
+            e.stopPropagation();
+            toggleBookmark(bmBtn.dataset.id);
+            return;
+          }
+
+          const card = e.target.closest('[data-act="open"]');
+          if (card) {
+            openArticle(card.dataset.id);
+            return;
+          }
+
+          const fBtn = e.target.closest('[data-f-key]');
+          if (fBtn) {
+            const k = fBtn.dataset.fKey;
+            const v = fBtn.dataset.fVal;
+            state.filters[k] = v;
+            if (k === 'sourceType') state.filters.specificSource = 'all';
+            renderIraq();
+            return;
+          }
+
+          if (e.target.closest('#btn-reset-filters')) {
+            state.filters = { sourceType: 'all', specificSource: 'all', governorate: 'all', topic: 'all' };
+            state.query = '';
+            const si = document.getElementById('search-input');
+            if (si) si.value = '';
+            renderIraq();
+          }
+        });
+
+        document.addEventListener('change', e => {
+          const chk = e.target.closest('[data-src-chk]');
+          if (!chk) return;
+          const id = chk.dataset.srcChk;
+          if (chk.checked) {
+            if (!state.enabledSources.includes(id)) state.enabledSources.push(id);
+          } else {
+            if (state.enabledSources.length <= 1) {
+              chk.checked = true;
+              showToast('يجب الإبقاء على مصدر واحد على الأقل');
+              return;
+            }
+            state.enabledSources = state.enabledSources.filter(x => x !== id);
+          }
+          SafeStore.set(SOURCES_STORAGE_KEY, state.enabledSources);
+          renderCurrentTab();
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+      } else {
+        boot();
+      }
+    })();
+  </script>
+</body>
+</html>
