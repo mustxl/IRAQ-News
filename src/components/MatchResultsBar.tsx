@@ -9,35 +9,101 @@ interface MatchResultsBarProps {
   onRefresh: () => void;
 }
 
-function TeamCrest({ name, logo }: { name: string; logo?: string }) {
-  const cleanLogo = logo?.trim() || '';
-  const [failed, setFailed] = useState(false);
+function getShieldPalette(name: string): [string, string] {
+  const palettes: Array<[string, string]> = [
+    ['#047857', '#34d399'],
+    ['#1d4ed8', '#60a5fa'],
+    ['#b91c1c', '#fbbf24'],
+    ['#7c3aed', '#c084fc'],
+    ['#c2410c', '#fb923c'],
+    ['#0f766e', '#2dd4bf'],
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  return palettes[hash % palettes.length];
+}
+
+function TeamCrest({
+  name,
+  logo,
+  fallbackLogo,
+  isInternational,
+}: {
+  name: string;
+  logo?: string;
+  fallbackLogo?: string;
+  isInternational?: boolean;
+}) {
+  const candidates = [logo?.trim(), fallbackLogo?.trim()].filter(
+    (u, idx, arr): u is string => Boolean(u) && arr.indexOf(u) === idx
+  );
+  const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    setFailed(false);
-  }, [cleanLogo]);
+    setIdx(0);
+  }, [logo, fallbackLogo]);
 
-  if (!cleanLogo || failed) {
-    const initial = name.trim().slice(0, 2);
+  const activeUrl = candidates[idx];
+
+  if (!activeUrl) {
+    const [c1, c2] = getShieldPalette(name);
+    const shortTag = name.trim().slice(0, 2);
     return (
       <span
         aria-hidden="true"
-        className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0"
+        className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 overflow-hidden relative"
       >
-        {initial}
+        {isInternational ? (
+          <svg viewBox="0 0 28 20" className="w-5 h-4 rounded-[3px] shadow-2xs">
+            <rect width="28" height="20" rx="2" fill={c1} />
+            <rect y="7" width="28" height="6" fill="#ffffff" fillOpacity="0.88" />
+            <circle cx="14" cy="10" r="3" fill={c2} />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 28 28" className="w-6 h-6">
+            <path
+              d="M14 2L24 6V14C24 20 19.6 24.4 14 26C8.4 24.4 4 20 4 14V6L14 2Z"
+              fill={c1}
+              stroke={c2}
+              strokeWidth="1.6"
+            />
+            <text
+              x="14"
+              y="17"
+              textAnchor="middle"
+              fill="#ffffff"
+              fontSize="8.5"
+              fontWeight="900"
+              fontFamily="Cairo, sans-serif"
+            >
+              {shortTag}
+            </text>
+          </svg>
+        )}
       </span>
     );
   }
 
+  const isFlagUrl =
+    activeUrl.includes('flagcdn.com') || activeUrl.includes('/countries/');
+
   return (
-    <img
-      src={cleanLogo}
-      alt={name}
-      loading="lazy"
-      referrerPolicy="no-referrer"
-      onError={() => setFailed(true)}
-      className="w-6 h-6 object-contain shrink-0"
-    />
+    <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-200/95 border border-slate-200 dark:border-slate-700/50 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+      <img
+        src={activeUrl}
+        alt={name}
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onError={() => setIdx((prev) => prev + 1)}
+        className={
+          isFlagUrl
+            ? 'w-full h-full object-cover rounded-[4px]'
+            : 'w-full h-full object-contain'
+        }
+      />
+    </span>
   );
 }
 
@@ -122,7 +188,12 @@ export function MatchResultsBar({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <TeamCrest name={m.homeName} logo={m.homeLogo} />
+                      <TeamCrest
+                        name={m.homeName}
+                        logo={m.homeLogo}
+                        fallbackLogo={m.homeFallbackLogo}
+                        isInternational={m.isInternational}
+                      />
                       <span
                         className={`text-xs sm:text-sm truncate ${
                           homeWon
@@ -146,7 +217,12 @@ export function MatchResultsBar({
 
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <TeamCrest name={m.awayName} logo={m.awayLogo} />
+                      <TeamCrest
+                        name={m.awayName}
+                        logo={m.awayLogo}
+                        fallbackLogo={m.awayFallbackLogo}
+                        isInternational={m.isInternational}
+                      />
                       <span
                         className={`text-xs sm:text-sm truncate ${
                           awayWon

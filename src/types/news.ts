@@ -43,9 +43,12 @@ export interface FootballMatch {
   statusLabel: string;
   homeName: string;
   homeLogo?: string;
+  homeFallbackLogo?: string;
   homeScore: string;
   awayName: string;
   awayLogo?: string;
+  awayFallbackLogo?: string;
   awayScore: string;
   winner?: 'home' | 'away' | 'draw';
+  isInternational?: boolean;
 }

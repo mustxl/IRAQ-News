@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import type { NewsArticle } from './src/types/news.ts';
+import type { NewsArticle } from './src/types/news.js';
 
 const IMG_BAGHDAD = '/src/assets/images/iraq_baghdad_heritage_1795018318321.jpg';
 const IMG_PORT = '/src/assets/images/iraq_development_port_1795018318837.jpg';

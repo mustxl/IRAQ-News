@@ -1,4 +1,4 @@
-import type { FootballMatch } from './src/types/news.ts';
+import type { FootballMatch } from './src/types/news.js';
 
 const CACHE_TTL_MS = 30 * 1000;
 
@@ -23,6 +23,190 @@ const SCOREBOARD_FEEDS: ScoreboardFeed[] = [
   { slug: 'all', priority: 5 },
 ];
 
+// ISO-3166 alpha-2 codes for FlagCDN crisp country flags (secondary fallback + missing ESPN country emblems)
+const COUNTRY_ISO_MAP: Record<string, string> = {
+  Iraq: 'iq',
+  'United Arab Emirates': 'ae',
+  UAE: 'ae',
+  'Saudi Arabia': 'sa',
+  Qatar: 'qa',
+  Jordan: 'jo',
+  Kuwait: 'kw',
+  Oman: 'om',
+  Bahrain: 'bh',
+  Egypt: 'eg',
+  Morocco: 'ma',
+  Algeria: 'dz',
+  Tunisia: 'tn',
+  Yemen: 'ye',
+  Syria: 'sy',
+  Lebanon: 'lb',
+  Palestine: 'ps',
+  Libya: 'ly',
+  Sudan: 'sd',
+  Mauritania: 'mr',
+  Somalia: 'so',
+  Djibouti: 'dj',
+  Comoros: 'km',
+  Brazil: 'br',
+  Argentina: 'ar',
+  France: 'fr',
+  Spain: 'es',
+  England: 'gb-eng',
+  Scotland: 'gb-sct',
+  Wales: 'gb-wls',
+  'Northern Ireland': 'gb-nir',
+  'N Ireland': 'gb-nir',
+  Germany: 'de',
+  Italy: 'it',
+  Portugal: 'pt',
+  Netherlands: 'nl',
+  Belgium: 'be',
+  Croatia: 'hr',
+  Denmark: 'dk',
+  Norway: 'no',
+  Sweden: 'se',
+  Switzerland: 'ch',
+  Austria: 'at',
+  Poland: 'pl',
+  Turkey: 'tr',
+  Türkiye: 'tr',
+  Romania: 'ro',
+  Hungary: 'hu',
+  'Bosnia-Herzegovina': 'ba',
+  'Bosnia-Herz': 'ba',
+  Ukraine: 'ua',
+  Serbia: 'rs',
+  Greece: 'gr',
+  Czechia: 'cz',
+  'Czech Republic': 'cz',
+  Slovakia: 'sk',
+  Slovenia: 'si',
+  Finland: 'fi',
+  Iceland: 'is',
+  Ireland: 'ie',
+  'Republic of Ireland': 'ie',
+  Albania: 'al',
+  Georgia: 'ge',
+  'North Macedonia': 'mk',
+  Montenegro: 'me',
+  Kosovo: 'xk',
+  Bulgaria: 'bg',
+  Israel: 'il',
+  Luxembourg: 'lu',
+  Estonia: 'ee',
+  Latvia: 'lv',
+  Lithuania: 'lt',
+  Cyprus: 'cy',
+  Malta: 'mt',
+  Kazakhstan: 'kz',
+  Azerbaijan: 'az',
+  Armenia: 'am',
+  Moldova: 'md',
+  Belarus: 'by',
+  Japan: 'jp',
+  'South Korea': 'kr',
+  'Korea Republic': 'kr',
+  Iran: 'ir',
+  Australia: 'au',
+  Uzbekistan: 'uz',
+  Malaysia: 'my',
+  Singapore: 'sg',
+  Indonesia: 'id',
+  Thailand: 'th',
+  Vietnam: 'vn',
+  China: 'cn',
+  India: 'in',
+  Pakistan: 'pk',
+  Tajikistan: 'tj',
+  Kyrgyzstan: 'kg',
+  Turkmenistan: 'tm',
+  'North Korea': 'kp',
+  Philippines: 'ph',
+  Uruguay: 'uy',
+  Colombia: 'co',
+  Chile: 'cl',
+  Ecuador: 'ec',
+  Bolivia: 'bo',
+  Peru: 'pe',
+  Paraguay: 'py',
+  Venezuela: 've',
+  Mexico: 'mx',
+  'United States': 'us',
+  USA: 'us',
+  Canada: 'ca',
+  'Costa Rica': 'cr',
+  Panama: 'pa',
+  Jamaica: 'jm',
+  Honduras: 'hn',
+  'El Salvador': 'sv',
+  Guatemala: 'gt',
+  'Dominican Republic': 'do',
+  'Dominican Rep': 'do',
+  Haiti: 'ht',
+  Cuba: 'cu',
+  'Trinidad and Tobago': 'tt',
+  Senegal: 'sn',
+  Nigeria: 'ng',
+  Cameroon: 'cm',
+  Ghana: 'gh',
+  'Ivory Coast': 'ci',
+  "Côte d'Ivoire": 'ci',
+  Mali: 'ml',
+  'Burkina Faso': 'bf',
+  'South Africa': 'za',
+  DR: 'cd',
+  'DR Congo': 'cd',
+  Congo: 'cg',
+  Angola: 'ao',
+  Zambia: 'zm',
+  Zimbabwe: 'zw',
+  Guinea: 'gn',
+  Gabon: 'ga',
+  Cape: 'cv',
+  'Cape Verde': 'cv',
+  Mozambique: 'mz',
+  Uganda: 'ug',
+  Kenya: 'ke',
+  Tanzania: 'tz',
+  Ethiopia: 'et',
+  'New Zealand': 'nz',
+  'New Caledonia': 'nc',
+  Fiji: 'fj',
+};
+
+// Known club crests when ESPN omits team.logo on women's/cup/reserve variants
+const CLUB_LOGO_FALLBACK_MAP: Record<string, string> = {
+  'Celta Vigo': 'https://a.espncdn.com/i/teamlogos/soccer/500/85.png',
+  Valencia: 'https://a.espncdn.com/i/teamlogos/soccer/500/94.png',
+  Espanyol: 'https://a.espncdn.com/i/teamlogos/soccer/500/88.png',
+  'Real Madrid': 'https://a.espncdn.com/i/teamlogos/soccer/500/86.png',
+  Barcelona: 'https://a.espncdn.com/i/teamlogos/soccer/500/83.png',
+  'Atletico Madrid': 'https://a.espncdn.com/i/teamlogos/soccer/500/1068.png',
+  Sevilla: 'https://a.espncdn.com/i/teamlogos/soccer/500/243.png',
+  'Real Betis': 'https://a.espncdn.com/i/teamlogos/soccer/500/244.png',
+  Villarreal: 'https://a.espncdn.com/i/teamlogos/soccer/500/102.png',
+  'Athletic Club': 'https://a.espncdn.com/i/teamlogos/soccer/500/93.png',
+  'Real Sociedad': 'https://a.espncdn.com/i/teamlogos/soccer/500/89.png',
+  Arsenal: 'https://a.espncdn.com/i/teamlogos/soccer/500/359.png',
+  Liverpool: 'https://a.espncdn.com/i/teamlogos/soccer/500/364.png',
+  Chelsea: 'https://a.espncdn.com/i/teamlogos/soccer/500/363.png',
+  'Manchester City': 'https://a.espncdn.com/i/teamlogos/soccer/500/382.png',
+  'Manchester United': 'https://a.espncdn.com/i/teamlogos/soccer/500/360.png',
+  'Tottenham Hotspur': 'https://a.espncdn.com/i/teamlogos/soccer/500/367.png',
+  'Bayern Munich': 'https://a.espncdn.com/i/teamlogos/soccer/500/132.png',
+  Bayern: 'https://a.espncdn.com/i/teamlogos/soccer/500/132.png',
+  'Borussia Dortmund': 'https://a.espncdn.com/i/teamlogos/soccer/500/124.png',
+  'Paris Saint-Germain': 'https://a.espncdn.com/i/teamlogos/soccer/500/160.png',
+  Juventus: 'https://a.espncdn.com/i/teamlogos/soccer/500/111.png',
+  'AC Milan': 'https://a.espncdn.com/i/teamlogos/soccer/500/103.png',
+  Internazionale: 'https://a.espncdn.com/i/teamlogos/soccer/500/110.png',
+  'AS Roma': 'https://a.espncdn.com/i/teamlogos/soccer/500/104.png',
+  Roma: 'https://a.espncdn.com/i/teamlogos/soccer/500/104.png',
+  Napoli: 'https://a.espncdn.com/i/teamlogos/soccer/500/114.png',
+  Benfica: 'https://a.espncdn.com/i/teamlogos/soccer/500/1929.png',
+};
+
 const TEAM_ARABIC_MAP: Record<string, string> = {
   'Real Madrid': 'ريال مدريد',
   Barcelona: 'برشلونة',
@@ -34,7 +218,9 @@ const TEAM_ARABIC_MAP: Record<string, string> = {
   Chelsea: 'تشيلسي',
   'Tottenham Hotspur': 'توتنهام',
   'Paris Saint-Germain': 'باريس سان جيرمان',
+  'Paris FC': 'باريس إف سي',
   'Bayern Munich': 'بايرن ميونخ',
+  Bayern: 'بايرن ميونخ',
   'Borussia Dortmund': 'بوروسيا دورتموند',
   Internazionale: 'إنتر ميلان',
   'Inter Milan': 'إنتر ميلان',
@@ -42,6 +228,14 @@ const TEAM_ARABIC_MAP: Record<string, string> = {
   Juventus: 'يوفنتوس',
   Napoli: 'نابولي',
   'AS Roma': 'روما',
+  Roma: 'روما',
+  Benfica: 'بنفيكا',
+  'Celta Vigo': 'سيلتا فيغو',
+  Espanyol: 'إسبانيول',
+  'Madrid CFF': 'مدريد سي إف إف',
+  'CD Argual': 'أرغوال',
+  Argual: 'أرغوال',
+  Lyonnes: 'ليون',
   Iraq: 'العراق',
   'United Arab Emirates': 'الإمارات',
   'Saudi Arabia': 'السعودية',
@@ -80,8 +274,11 @@ const TEAM_ARABIC_MAP: Record<string, string> = {
   Romania: 'رومانيا',
   Hungary: 'المجر',
   'Bosnia-Herzegovina': 'البوسنة والهرسك',
+  'Bosnia-Herz': 'البوسنة والهرسك',
   'Northern Ireland': 'أيرلندا الشمالية',
+  'N Ireland': 'أيرلندا الشمالية',
   Scotland: 'اسكتلندا',
+  Wales: 'ويلز',
   Ukraine: 'أوكرانيا',
   Serbia: 'صربيا',
   Greece: 'اليونان',
@@ -93,6 +290,27 @@ const TEAM_ARABIC_MAP: Record<string, string> = {
   Malaysia: 'ماليزيا',
   Singapore: 'سنغافورة',
   Indonesia: 'إندونيسيا',
+  Uruguay: 'الأوروغواي',
+  Ecuador: 'الإكوادور',
+  Bolivia: 'بوليفيا',
+  Colombia: 'كولومبيا',
+  Chile: 'تشيلي',
+  Peru: 'بيرو',
+  Paraguay: 'باراغواي',
+  Venezuela: 'فنزويلا',
+  Panama: 'بنما',
+  'Costa Rica': 'كوستاريكا',
+  'Dominican Rep': 'الدومينيكان',
+  'Dominican Republic': 'الدومينيكان',
+  Uganda: 'أوغندا',
+  Mozambique: 'موزمبيق',
+  Haiti: 'هايتي',
+  'New Caledonia': 'كاليدونيا الجديدة',
+  'New Zealand': 'نيوزيلندا',
+  Mexico: 'المكسيك',
+  'United States': 'الولايات المتحدة',
+  USA: 'الولايات المتحدة',
+  Canada: 'كندا',
   'Al Hilal': 'الهلال',
   'Al Nassr': 'النصر',
   'Al Ahli': 'الأهلي',
@@ -108,11 +326,70 @@ const TEAM_ARABIC_MAP: Record<string, string> = {
   Tenerife: 'تينيريفي',
   'BK Häcken': 'هاكن',
   'OH Leuven': 'لوفين',
+  Vasco: 'فاسكو دا غاما',
+  Internacional: 'إنترناسيونال',
+  Vitória: 'فيتوريا',
+  Bragantino: 'براغانتينو',
+  Peñarol: 'بنيارول',
 };
+
+function stripVariantSuffix(name: string): string {
+  return name
+    .replace(/\s+(U-?\d+|Women|Femenino|Féminines|FC|CF|SC)$/i, '')
+    .trim();
+}
+
+function getCountryIso(rawName: string): string | undefined {
+  const clean = rawName.trim();
+  return COUNTRY_ISO_MAP[clean] ?? COUNTRY_ISO_MAP[stripVariantSuffix(clean)];
+}
+
+function resolveTeamLogos(
+  rawName: string,
+  displayName: string,
+  espnLogo?: string,
+  logosArr?: Array<{ href?: string }>
+): { logo?: string; fallbackLogo?: string; isCountry: boolean } {
+  const iso = getCountryIso(rawName) ?? getCountryIso(displayName);
+  const flagCdn = iso ? `https://flagcdn.com/w80/${iso}.png` : undefined;
+
+  const cleanEspn =
+    (espnLogo && espnLogo.trim()) ||
+    (logosArr?.find((l) => l.href?.trim())?.href?.trim() ?? '');
+
+  if (iso && flagCdn) {
+    // Prefer ESPN country logo when present, with guaranteed FlagCDN backup (and FlagCDN direct if ESPN omitted it)
+    return {
+      logo: cleanEspn || flagCdn,
+      fallbackLogo: cleanEspn ? flagCdn : undefined,
+      isCountry: true,
+    };
+  }
+
+  const clubBackup =
+    CLUB_LOGO_FALLBACK_MAP[rawName.trim()] ??
+    CLUB_LOGO_FALLBACK_MAP[displayName.trim()] ??
+    CLUB_LOGO_FALLBACK_MAP[stripVariantSuffix(rawName)] ??
+    CLUB_LOGO_FALLBACK_MAP[stripVariantSuffix(displayName)];
+
+  if (cleanEspn) {
+    return {
+      logo: cleanEspn,
+      fallbackLogo: clubBackup && clubBackup !== cleanEspn ? clubBackup : undefined,
+      isCountry: false,
+    };
+  }
+
+  return {
+    logo: clubBackup,
+    fallbackLogo: undefined,
+    isCountry: false,
+  };
+}
 
 function translateTeam(name: string): string {
   const clean = name.trim();
-  return TEAM_ARABIC_MAP[clean] ?? clean;
+  return TEAM_ARABIC_MAP[clean] ?? TEAM_ARABIC_MAP[stripVariantSuffix(clean)] ?? clean;
 }
 
 function translateLeague(rawName: string, slug: string): string {
@@ -123,13 +400,17 @@ function translateLeague(rawName: string, slug: string): string {
   if (s.includes('worldq') || s.includes('qualifying')) return 'تصفيات كأس العالم';
   if (s.includes('english premier') || s.includes('eng.1')) return 'الدوري الإنجليزي';
   if (s.includes('laliga') || s.includes('esp.1')) return 'الدوري الإسباني';
-  if (s.includes('serie a') || s.includes('ita.1')) return 'الدوري الإيطالي';
+  if (s.includes('serie a') && s.includes('ita')) return 'الدوري الإيطالي';
+  if (s.includes('brasileiro') || s.includes('bra.1')) return 'الدوري البرازيلي';
   if (s.includes('bundesliga') || s.includes('ger.1')) return 'الدوري الألماني';
   if (s.includes('ligue 1') || s.includes('fra.1')) return 'الدوري الفرنسي';
   if (s.includes('saudi') || s.includes('ksa.1')) return 'الدوري السعودي';
-  if (s.includes('copa del rey') || s.includes('first-round') || s.includes('third-round')) return 'كأس ملك إسبانيا';
+  if (s.includes('copa del rey') || s.includes('copa de la reina') || s.includes('first-round') || s.includes('third-round'))
+    return 'كأس إسبانيا';
   if (s.includes('clausura') || s.includes('apertura')) return 'دوري أمريكا اللاتينية';
+  if (s.includes('group-stage') || s.includes('world-cup')) return 'بطولة دولية للمنتخبات';
   if (s.includes('league-phase')) return 'بطولة أوروبية';
+  if (s.includes('regular-season')) return 'مباراة دوري محلي';
   return rawName || 'مباراة كرة قدم';
 }
 
@@ -195,7 +476,12 @@ export async function getRecentFootballMatches(forceRefresh = false): Promise<{
                 homeAway?: string;
                 score?: string;
                 winner?: boolean;
-                team?: { displayName?: string; shortDisplayName?: string; logo?: string };
+                team?: {
+                  displayName?: string;
+                  shortDisplayName?: string;
+                  logo?: string;
+                  logos?: Array<{ href?: string }>;
+                };
               }>;
             }>;
           }>;
@@ -216,11 +502,9 @@ export async function getRecentFootballMatches(forceRefresh = false): Promise<{
         const state: 'in' | 'post' | 'pre' =
           rawState === 'in' ? 'in' : rawState === 'post' ? 'post' : 'pre';
 
-        // Focus strictly on live and recently finished matches
         if (state === 'pre') continue;
 
         const ts = Date.parse(ev.date);
-        // Skip very old archive fixtures (> 10 days old)
         if (Number.isFinite(ts) && now - ts > 10 * 24 * 60 * 60 * 1000) continue;
 
         const competitors = ev.competitions?.[0]?.competitors ?? [];
@@ -229,9 +513,11 @@ export async function getRecentFootballMatches(forceRefresh = false): Promise<{
         const home = competitors.find((c) => c.homeAway === 'home') ?? competitors[0];
         const away = competitors.find((c) => c.homeAway === 'away') ?? competitors[1];
 
-        const homeRaw = (home.team?.shortDisplayName || home.team?.displayName || '').trim();
-        const awayRaw = (away.team?.shortDisplayName || away.team?.displayName || '').trim();
-        if (!homeRaw || !awayRaw) continue;
+        const homeShort = (home.team?.shortDisplayName || home.team?.displayName || '').trim();
+        const homeFull = (home.team?.displayName || homeShort).trim();
+        const awayShort = (away.team?.shortDisplayName || away.team?.displayName || '').trim();
+        const awayFull = (away.team?.displayName || awayShort).trim();
+        if (!homeShort || !awayShort) continue;
 
         const homeScore = String(home.score ?? '0');
         const awayScore = String(away.score ?? '0');
@@ -245,6 +531,9 @@ export async function getRecentFootballMatches(forceRefresh = false): Promise<{
           else winner = 'draw';
         }
 
+        const homeLogos = resolveTeamLogos(homeShort, homeFull, home.team?.logo, home.team?.logos);
+        const awayLogos = resolveTeamLogos(awayShort, awayFull, away.team?.logo, away.team?.logos);
+
         const leagueLabel =
           feed.arabicLeague ||
           translateLeague(rawLeagueName || ev.season?.slug || '', feed.slug);
@@ -255,13 +544,16 @@ export async function getRecentFootballMatches(forceRefresh = false): Promise<{
           date: ev.date,
           state,
           statusLabel: translateStatus(state, ev.status?.type?.shortDetail || '', ev.date),
-          homeName: translateTeam(homeRaw),
-          homeLogo: home.team?.logo || undefined,
+          homeName: translateTeam(homeShort),
+          homeLogo: homeLogos.logo,
+          homeFallbackLogo: homeLogos.fallbackLogo,
           homeScore,
-          awayName: translateTeam(awayRaw),
-          awayLogo: away.team?.logo || undefined,
+          awayName: translateTeam(awayShort),
+          awayLogo: awayLogos.logo,
+          awayFallbackLogo: awayLogos.fallbackLogo,
           awayScore,
           winner,
+          isInternational: homeLogos.isCountry || awayLogos.isCountry,
         };
 
         const existing = byId.get(ev.id);
@@ -277,7 +569,6 @@ export async function getRecentFootballMatches(forceRefresh = false): Promise<{
 
     const sorted = Array.from(byId.values())
       .sort((a, b) => {
-        // Live matches first, then newest finished matches
         if (a.match.state === 'in' && b.match.state !== 'in') return -1;
         if (b.match.state === 'in' && a.match.state !== 'in') return 1;
         if (b.ts !== a.ts) return b.ts - a.ts;

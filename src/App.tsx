@@ -21,6 +21,7 @@ import {
   WORLD_CATEGORIES,
 } from './data/newsData';
 import { FootballMatch, IraqFilters, NewsArticle, TabId } from './types/news';
+import { fetchClientMatchesDirect } from './utils/clientMatches';
 import { SafeStore, STORAGE_KEYS } from './utils/storage';
 import { useFemaleReader } from './utils/useFemaleReader';
 
@@ -193,8 +194,19 @@ export default function App() {
     void syncLatestNews(false);
 
     let eventSource: EventSource | null = null;
+    let sseErrors = 0;
     if (typeof EventSource !== 'undefined') {
       eventSource = new EventSource('/api/news/stream');
+      eventSource.addEventListener('open', () => {
+        sseErrors = 0;
+      });
+      eventSource.addEventListener('error', () => {
+        sseErrors += 1;
+        if (sseErrors >= 2) {
+          eventSource?.close();
+          eventSource = null;
+        }
+      });
       eventSource.addEventListener('new_articles', (ev) => {
         if (!active) return;
         try {
@@ -219,7 +231,7 @@ export default function App() {
 
     const fallbackInterval = window.setInterval(() => {
       void syncLatestNews(true);
-    }, 45_000);
+    }, 30_000);
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
@@ -239,11 +251,26 @@ export default function App() {
   const loadMatches = useCallback(async (force = false) => {
     if (force) setMatchesRefreshing(true);
     try {
-      const res = await fetch(force ? '/api/sports/matches?force=1' : '/api/sports/matches');
-      if (!res.ok) return;
-      const data = (await res.json()) as { matches?: FootballMatch[] };
-      if (Array.isArray(data.matches)) {
-        setMatches(data.matches);
+      let loaded: FootballMatch[] | null = null;
+      try {
+        const res = await fetch(force ? '/api/sports/matches?force=1' : '/api/sports/matches');
+        const ctype = res.headers.get('content-type') || '';
+        if (res.ok && ctype.includes('application/json')) {
+          const data = (await res.json()) as { matches?: FootballMatch[] };
+          if (Array.isArray(data.matches) && data.matches.length > 0) {
+            loaded = data.matches;
+          }
+        }
+      } catch {
+        // Fall through to direct browser ESPN fetch
+      }
+
+      if (!loaded) {
+        loaded = await fetchClientMatchesDirect();
+      }
+
+      if (Array.isArray(loaded) && loaded.length > 0) {
+        setMatches(loaded);
       }
     } catch {
       // Keep cached matches if offline
